@@ -262,13 +262,6 @@ asap_main(PyObject *self, PyObject *args) {
 	if (parseItem(dict, "seed", 'i', &seed_asap)) return NULL;
 	printf("> seed_asap = %i\n", seed_asap);
 
-	if (parseItem(dict, "number", 'f', &(asap_param.seuil_pvalue))) return NULL;
-	printf("> asap_param.seuil_pvalue = %f\n", asap_param.seuil_pvalue);
-
-	// ??????????
-	if (parseItem(dict, "pond_pente", 'f', &(asap_param.pond_pente))) return NULL;
-	printf("> asap_param.pond_pente = %f\n", asap_param.pond_pente);
-
 	if (parseItem(dict, "rate", 'f', &ts_tv)) return NULL;
 	printf("> ts_tv = %f\n", ts_tv);
 
