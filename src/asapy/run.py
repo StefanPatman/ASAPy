@@ -9,7 +9,7 @@ def main():
     if len(sys.argv) == 2:
         print(' ')
         a=core.PartitionAnalysis(sys.argv[1])
-        core.launch(a)
+        a.launch())
     else:
         print('Usage: asap FILE')
         print('Ex:    asap tests/test.fas')

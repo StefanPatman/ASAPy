@@ -53,28 +53,20 @@ class PartitionAnalysis():
         asapc.main(kwargs)
         self.results = self.target
 
-
-def worker(analysis):
-    """
-    Called by launch() on a new process
-    """
-    analysis.run()
-    # print('Analysis complete:', analysis.results)
-
-def launch(analysis):
-    """
-    Should always use a seperate process to launch the ASAP core,
-    since it uses exit(1) and doesn't always free allocated memory.
-    Save results on a temporary directory, use fetch() to retrieve them.
-    """
-    # When the last reference of TemporaryDirectory is gone,
-    # the directory is automatically cleaned up, so keep it here.
-    analysis._temp = tempfile.TemporaryDirectory(prefix='asap_')
-    analysis.target = analysis._temp.name
-    p = Process(target=worker, args=(analysis,))
-    p.start()
-    p.join()
-    if p.exitcode != 0:
-        raise RuntimeError('ASAP internal error, please check logs.')
-    # Success, update analysis object for parent process
-    analysis.results = analysis.target
+    def launch(self):
+        """
+        Should always use a seperate process to launch the ASAP core,
+        since it uses exit(1) and doesn't always free allocated memory.
+        Save results on a temporary directory, use fetch() to retrieve them.
+        """
+        # When the last reference of TemporaryDirectory is gone,
+        # the directory is automatically cleaned up, so keep it here.
+        self._temp = tempfile.TemporaryDirectory(prefix='asap_')
+        self.target = self._temp.name
+        p = Process(target=self.run)
+        p.start()
+        p.join()
+        if p.exitcode != 0:
+            raise RuntimeError('ASAP internal error, please check logs.')
+        # Success, update analysis object for parent process
+        self.results = self.target
