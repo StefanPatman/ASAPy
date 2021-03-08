@@ -4,13 +4,13 @@ import tempfile
 import shutil
 from datetime import datetime
 
-from . import abgdc
+from . import asapc
 from . import param
 from . import params
 
-class BarcodeAnalysis():
+class PartitionAnalysis():
     """
-    Container for input/output of ABGD core.
+    Container for input/output of ASAP core.
     """
 
     def __getstate__(self):
@@ -40,7 +40,7 @@ class BarcodeAnalysis():
 
     def run(self):
         """
-        Run the ABGD core with given params,
+        Run the ASAP core with given params,
         save results to a temporary directory.
         """
         kwargs = self.param.as_dictionary()
@@ -50,7 +50,7 @@ class BarcodeAnalysis():
         if self.target is not None:
             kwargs['out'] = self.target
         print(kwargs)
-        abgdc.main(kwargs)
+        asapc.main(kwargs)
         self.results = self.target
 
 
@@ -63,18 +63,18 @@ def worker(analysis):
 
 def launch(analysis):
     """
-    Should always use a seperate process to launch the ABGD core,
+    Should always use a seperate process to launch the ASAP core,
     since it uses exit(1) and doesn't always free allocated memory.
     Save results on a temporary directory, use fetch() to retrieve them.
     """
     # When the last reference of TemporaryDirectory is gone,
     # the directory is automatically cleaned up, so keep it here.
-    analysis._temp = tempfile.TemporaryDirectory(prefix='abgd_')
+    analysis._temp = tempfile.TemporaryDirectory(prefix='asap_')
     analysis.target = analysis._temp.name
     p = Process(target=worker, args=(analysis,))
     p.start()
     p.join()
     if p.exitcode != 0:
-        raise RuntimeError('ABGD internal error, please check logs.')
+        raise RuntimeError('ASAP internal error, please check logs.')
     # Success, update analysis object for parent process
     analysis.results = analysis.target

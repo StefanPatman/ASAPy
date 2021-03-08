@@ -1,8 +1,8 @@
-# ABGDpy
+# ASAPy
 
-Primary species delimitation using automatic barcode gap discovery.
+Assemble species by automatic partitioning.
 
-This is a Python wrapper for ABGD: <https://bioinfo.mnhn.fr/abi/public/abgd/>
+This is a Python wrapper for ABGD: <https://bioinfo.mnhn.fr/abi/public/asap/>
 
 *(you will need a C compiler when building from source)*
 
@@ -14,21 +14,21 @@ Install using pip:
 $ pip install .
 ```
 
-Run the GUI:
+<!-- Run the GUI:
 
 ```
-$ abgdpy-qt
-```
+$ asapy-qt
+``` -->
 
 Simple command line tool:
 
 ```
-$ abgdpy tests/test.fas
+$ asapy tests/test.fas
 ```
-
+<!--
 ## Launch without installing
 
-Before the first time you use the program, you must install any required modules, build the ABGD core and auto-compile the Qt resource files:
+Before the first time you use the program, you must install any required modules, build the ASAP core and auto-compile the Qt resource files:
 ```
 $ pip install -r requirements.txt
 $ python setup.py build_ext --inplace
@@ -42,7 +42,7 @@ $ python launcher.py
 
 ## Packaging
 
-You must first compile the ABGD C module, auto-compile Qt resources,
+You must first compile the ASAP C module, auto-compile Qt resources,
 then use PyInstaller on the launcher **spec** file:
 ```
 $ pip install pyinstaller
@@ -53,12 +53,12 @@ $ pyinstaller launcher.spec
 
 ## Module
 
-You may import and use the ABGD module in your python scripts.
+You may import and use the ASAP module in your python scripts.
 
 To launch the GUI:
 ```
->>> import abgdpy.qt
->>> abgdpy.qt.main.show()
+>>> import asapy.qt
+>>> asapy.qt.main.show()
 ```
 
 More examples to follow soon.
@@ -92,16 +92,13 @@ Save them in a new directory:
 ```
 >>> print(a.results)
 >>> a.fetch('./my_results')
-```
+``` -->
 
 ## Acknowledgements
 
-N Puillandre, A Lambert, S Brouillet and G Achaz ABGD,\
-[Automatic Barcode Gap Discovery for primary species delimitation][paper],\
-Mol Ecol. 2011.
+Puillandre N, Brouillet S, Achaz G. ASAP,\
+assemble species by automatic partitioning,
+Molecular Ecology Resources 2021.
 
-- Original C code by G. Achaz
-- Code update by Sophie Brouillet
+- Original C code by Guillaume Achaz and Sophie Brouillet
 - BIONJ by Olivier Gascuel
-
-[paper]: https://pubmed.ncbi.nlm.nih.gov/21883587/

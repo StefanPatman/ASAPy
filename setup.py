@@ -38,13 +38,15 @@ class build_py(_build_py):
         self.run_command('build_qt')
         _build_py.run(self)
 
-abgdmodule = Extension('abgdpy.abgdc',
-                    include_dirs = ['src/abgdpy/c'],
+asapmodule = Extension('asapy.asapc',
+                    include_dirs = ['src/asapy/c'],
                     sources = [
-                        'src/abgdpy/c/abgdmodule.c',
-                        'src/abgdpy/c/abgdCore.c',
-                        'src/abgdpy/c/bionjcabgd.c',
-                        'src/abgdpy/c/main_abgd.c',
+                        'src/asapy/c/asapmodule.c',
+                        'src/asapy/c/asap_common.c',
+                        'src/asapy/c/asap_core.c',
+                        'src/asapy/c/draw.c',
+                        'src/asapy/c/gdtosvg.c',
+                        'src/asapy/c/oldfns.c',
                         ])
 
 # Get the long description from the README file
@@ -53,13 +55,13 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 setup(
 
     # This is the name of your project
-    name='abgdpy',
+    name='asapy',
 
     # Versions should comply with PEP 440
-    version='0.2.1',
+    version='0.0.1',
 
     # This is a one-line description or tagline of what your project does
-    description='A Python wrapper for ABGD',  # Optional
+    description='A Python wrapper for ASAP',  # Optional
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.
@@ -149,7 +151,7 @@ setup(
     packages=find_packages(where='src'),  # Required
 
     # Extension module
-    ext_modules = [abgdmodule],
+    ext_modules = [asapmodule],
 
     # Specify which Python versions you support. In contrast to the
     # 'Programming Language' classifiers above, 'pip install' will check this
@@ -204,8 +206,8 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'abgdpy=abgdpy.run:main',
-            'abgdpy-qt=abgdpy.qt.run:main',
+            'asapy=asapy.run:main',
+            # 'asapy-qt=asapy.qt.run:main',
         ],
     },
 

@@ -8,9 +8,8 @@ def main():
     """Anayze given file"""
     if len(sys.argv) == 2:
         print(' ')
-        a=core.BarcodeAnalysis(sys.argv[1])
+        a=core.PartitionAnalysis(sys.argv[1])
         core.launch(a)
-        # a.fetch
     else:
-        print('Usage: abgd FILE')
-        print('Ex:    abgd tests/test.fas')
+        print('Usage: asap FILE')
+        print('Ex:    asap tests/test.fas')

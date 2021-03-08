@@ -12,8 +12,8 @@ https://www.python.org/dev/peps/pep-0489/
 #include <Python.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "abgd.h"
-#include "main_abgd.h"
+#include "asap.h"
+#include "oldfns.h"
 
 #define SIGN( a ) ( ( (a) > 0 )?1: ( ((a)==0)?0:-1)  )
 static int Increase(const void *v1, const void *v2){  	return (int)SIGN( *((double *)v1) - *((double *)v2));  };
@@ -85,136 +85,130 @@ int parseItem(PyObject *dict, const char *str, const char t, void *var) {
 }
 
 static PyObject *
-abgd_main(PyObject *self, PyObject *args) {
+asap_main(PyObject *self, PyObject *args) {
 
 	PyObject *dict;
 	PyObject *item;
 
-	const char *file = NULL;
-	const char *dirfiles = NULL;
-	const char *dirfiles_default = ".";
-	char file_name[256],
-	     ledir[128];
-
-	char *meth=NULL,
-	     *newickString=NULL,
-	     *newickStringOriginal=NULL,
-	     *simplename=NULL;
-
-	char *mask;                      /* used to mask some row/col in the distance matrix -- consider only sub-part of the matrix */
-
-	double *ValArray;               /* array where input data are stored */
-	double MaxDist=0.1;             /* default 'a priori' maximum distance within species */
-	double *myDist;
-	double *vals;                   /* pairwise distances */
-	double minSlopeIncrease=1.5;
-	double minDist=0.001;
-	double *bcod;
-	float ts_tv=2.0; /*defautl value for trans/transv rate for Kimura*/
-	long NVal=0;                    /* array size */
-	long nval=0;                    /* number of pairwise comparisons */
-
-
-	long i,j;       /* simple counting tmp variable */
-
-	struct Peak my_abgd;             /* In this Structure, There is the Peak dist and the corresponding rank */
-	struct DistanceMatrix distmat;   /* input matrix of distance all vs all */
-	struct Composante comp;          /* group partition */
-	struct Peak recursive_abgd;     /* structure for storing extra split distance */
-
-	short output_slope=0;            /* to output slopes -- watch out it can be very verbose -- */
-	short output_groups=0;           /* output group composition ? */
-
-	short opt_recursion=0;           /* shall we attempt to re-split the primary partition ? */
-
-	short verbose;									/* a bit more verbose */
-	short stop_at_once=0;
-	char DEBUG;											/* way too much verbose.. only for debugging */
-
-	int myD,imethode=1;
-	int *mySpecies,*specInit;
-	int nbStepsABGD=10;             /* How many values are inserted in [p,P] */
-	int c;
-	int flag=1;                     /* if 0, do change in groups, if 1, need another round */
-	int a,b;                        /* dummy counters */
-	int nc;                         /* number of composantes from the first partition before sub-splitting */
-	int round=1;                    /* how many recurssion round */
-	int windsize_min=0;             /* the smallest wind_size */
-	int windsize_max=0;             /* the smallest wind_size */
-	int fmeg=0;
-	int withallfiles=0;
-	FILE *f, *f2,                     /* flux for reading (f) or output (fout) */
-	     *fout;
-	int nbbids=20;
-	int notreefile=0;/*option for only groups*/
-	int nbreal;
-	struct tm      *tm;
-	int ncomp_primary=0;
-	// char buffer2[80];
-	const char *timeSig = NULL;
-	const char *timeSig_default = "?";
 	int withlogfile=0;
 	int stdout_bak = -1;
 	int stderr_bak = -1;
 	fpos_t stdout_pos;
 	fpos_t stderr_pos;
-	int withspart=1;
-	Spart *myspar,*myspar2;
-	int **nb_subsets;
-	struct stat st;
-	struct stat     statbuf;
-	FILE *fres=stdout;
-	char dataFilename[256];
-	// char buffer[80];
-   	struct stat stfile = {0};
-char *bout;
+
+	/* a bunch of beautiful structures usefull for the code */
+
+	DistMat mat;               /* The matrix distance */
+	DistPair *ListDistance;    /* distance for all sequence pairs */
+	Composante comp;           /* The whole graph that describes the species */
+	Results *scores;
+	Tabcompo *strucompo;       /* each elemnt store how many groups and how many sequences in each group */
+	Node *zenodes;             /* Nodes of the hierarchical clusterting tree */
+	Parameter asap_param;  		/*stuff for asap*/
+
+	int i,
+//		*grp,
+//	    nb_pairs,
+	    nbresults = 0,
+	    firstpart,
+//	    n_best=0,
+	    color_ori=5,
+
+	    seed_asap=-1,
+	    *no_node;       // report for each sequence, its current node
 
 
-	// Fetch time from arguments instead
-	// stat(argv[0], &statbuf);
-  //   tm = localtime(&statbuf.st_mtime);
-	//
- 	// strftime(buffer,80,"%x - %I:%M%p", tm); // 11/19/20 - 05:34PM
-	// strftime(buffer2,80,"%FT%T", tm); // 11/19/20 - 05:34PM
+	FILE *f_in,
 
-	// *dirfiles='.';
-	// *(dirfiles+1)='\0';
-	ts_tv=2;
-	DEBUG=0;
-	verbose=0;
+	     *fgroups,
+//	 	 *ffgroups,
+	     *svgout;
 
+	char *fout,
+			 *dirfiles,
+	     *dirfiles_default = ".",
+	     *file_data,
+//	      *nametree,
+	     *fname,
+	     *namegroups,
+	     *simple_name;
+
+
+//	char nametree[512];
+
+	time_t t1, t2, t3, t5;
+
+	char c;
+
+
+	int imethode = 1, fmeg = 0, withallfiles = 0;//imethode1 for Jukes
+	int last_node;
+
+	float maxDist,
+	      min,
+	      ts_tv = 2.0;     /* default value for the trans/transv rates for Kimura 2-p */
+
+	double best_score, echx, echy,max_score,min_score;
+
+	int widthKlado;
+	//float seuil_pvalue=0.05;
+
+	float minAsapDist=0.005,maxAsapDist=0.05;
+
+
+	struct stat st = {0};
+
+
+		/*
+			init
+		 */
+		dirfiles = NULL;
+		t1 = time(NULL);
+
+		asap_param.pond_pente=0.1;
+		asap_param.pond_score=0.5;
+		asap_param.replicates=1000;
+		asap_param.seuil_pvalue=0.05;
+		//asap_param.ledir="";
+		asap_param.fres=stderr;
+		asap_param.lenSeq=600;
 
 	// Accept a dictionary-like python object
 	if (!PyArg_ParseTuple(args, "O", &dict))
 		return NULL;
 	if (!PyDict_Check(dict)) {
-		PyErr_SetString(PyExc_TypeError, "abgd_main: Argument must be a dictionary");
+		PyErr_SetString(PyExc_TypeError, "asap_main: Argument must be a dictionary");
 		return NULL;
 	}
 
-	if (parseItem(dict, "file", 's', &file)) return NULL;
+	if (parseItem(dict, "file", 's', &file_data)) return NULL;
 
-	if (!file) {
-		PyErr_SetString(PyExc_KeyError, "abgd_main: Mandatory key: 'file'");
+	if (!file_data) {
+		PyErr_SetString(PyExc_KeyError, "asap_main: Mandatory key: 'file'");
 		return NULL;
 	}
 
-	f=fopen(file,"r");
-	if (f==NULL) {
-		PyErr_Format(PyExc_FileNotFoundError, "abgd_main: Input file not found: '%s'", file);
+	f_in = fopen(file_data, "r");
+	if (f_in==NULL) {
+		PyErr_Format(PyExc_FileNotFoundError, "asap_main: Input file not found: '%s'", file_data);
 		return NULL;
 	}
-	simplename = Built_OutfileName( file );
-	//	printf("%s\n",simplename);
 
 	if (parseItem(dict, "out", 's', &dirfiles)) return NULL;
 	if (!dirfiles) dirfiles = dirfiles_default;
 
+	if (dirfiles[strlen(dirfiles)-1]!='/')
+		strcat(dirfiles,"/");
+
+	if (stat(dirfiles, &st) == -1) {
+		mkdir(dirfiles, 0700);
+	}
+
 	if (parseItem(dict, "logfile", 'b', &withlogfile)) return NULL;
 
 	if (withlogfile) {
-		sprintf(file_name,"%s/abgd.log",dirfiles);
-		printf("> Redirecting stdout/stderr to file: %s\n", file_name);
+		sprintf(file_data,"%s/asap.log",dirfiles);
+		printf("> Redirecting stdout/stderr to file: %s\n", file_data);
 		printf("BEFORE REDIRECT: \n");
 		printf("stdout %d\n", stdout);
 		printf("stderr %d\n", stderr);
@@ -224,7 +218,7 @@ char *bout;
 		fgetpos(stderr, &stderr_pos);
 		stdout_bak = dup(fileno(stdout));
 		stderr_bak = dup(fileno(stderr));
-		FILE *dout = freopen(file_name,"w",stdout);
+		FILE *dout = freopen(file_data,"w",stdout);
 		#ifdef _WIN32
 		// Open stderr or else dup2 will fail for windowed app
 		FILE *derr = freopen("NUL:","w",stderr);
@@ -237,579 +231,347 @@ char *bout;
 		printf("stdout_bak %p\n", stdout_bak);
 		printf("stderr_bak %p\n", stderr_bak);
 		if ((dout == NULL) || (ddup < 0)) {
-			PyErr_SetString(PyExc_SystemError, "abgd_main: Failed to redirect output, aborting.");
+			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to redirect output, aborting.");
 			return NULL;
 		}
 	}
 
+	/*
+		Header
+	*/
+	fprintf(stderr, "/*\n");
+	fprintf(stderr, "\tASAP (Agglomerate Specimens by Automatic Processing)\n");
+	fprintf(stderr, "\twill delineate species in your dataset in a few moments.\n");
+	fprintf(stderr, "\tRemember that the final cut remains yours!\n");
+	fprintf(stderr, "*/\n");
+
 	// Print these here so they are redirected if needed
-	printf("> file = %s\n", file);
+	printf("> file = %s\n", file_data);
 	printf("> dirfiles = %s\n", dirfiles);
 	printf("> withlogfile = %i\n", withlogfile);
-
-	if (parseItem(dict, "time", 's', &timeSig)) return NULL;
-	if (!timeSig) timeSig = timeSig_default;
-	printf("> timeSig = %s\n", timeSig);
 
 	if (parseItem(dict, "method", 'i', &imethode)) return NULL;
 	printf("> imethode = %i\n", imethode);
 
-	if (parseItem(dict, "bids", 'i', &nbbids)) return NULL;
-	printf("> nbbids = %i\n", nbbids);
+	if (parseItem(dict, "sequence_length", 'i', &(asap_param.lenSeq))) return NULL;
+	printf("> asap_param.lenSeq = %i\n", asap_param.lenSeq);
 
-	if (parseItem(dict, "steps", 'i', &nbStepsABGD)) return NULL;
-	printf("> nbStepsABGD = %i\n", nbStepsABGD);
+	if (parseItem(dict, "replicates", 'i', &(asap_param.replicates))) return NULL;
+	printf("> asap_param.replicates = %i\n", asap_param.replicates);
 
-	if (parseItem(dict, "min", 'd', &minDist)) return NULL;
-	printf("> minDist = %f\n", minDist);
+	if (parseItem(dict, "seed", 'i', &seed_asap)) return NULL;
+	printf("> seed_asap = %i\n", seed_asap);
 
-	if (parseItem(dict, "max", 'd', &MaxDist)) return NULL;
-	printf("> MaxDist = %f\n", MaxDist);
+	if (parseItem(dict, "number", 'f', &(asap_param.seuil_pvalue))) return NULL;
+	printf("> asap_param.seuil_pvalue = %f\n", asap_param.seuil_pvalue);
 
-	if (parseItem(dict, "slope", 'd', &minSlopeIncrease)) return NULL;
-	printf("> minSlopeIncrease = %f\n", minSlopeIncrease);
+	// ??????????
+	if (parseItem(dict, "pond_pente", 'f', &(asap_param.pond_pente))) return NULL;
+	printf("> asap_param.pond_pente = %f\n", asap_param.pond_pente);
 
 	if (parseItem(dict, "rate", 'f', &ts_tv)) return NULL;
 	printf("> ts_tv = %f\n", ts_tv);
 
-	if (parseItem(dict, "mega", 'b', &fmeg)) return NULL;
-	printf("> fmeg = %i\n", fmeg);
-
 	if (parseItem(dict, "all", 'b', &withallfiles)) return NULL;
 	printf("> withallfiles = %i\n", withallfiles);
 
-	if (parseItem(dict, "spart", 'b', &withspart)) return NULL;
-	printf("> withspart = %i\n", withspart);
+	if (parseItem(dict, "mega", 'b', &fmeg)) return NULL;
+	printf("> fmeg = %i\n", fmeg);
 
-	if (parseItem(dict, "verbose", 'b', &verbose)) return NULL;
-	printf("> verbose = %i\n", verbose);
 
-	if (parseItem(dict, "simple", 'b', &notreefile)) return NULL;
-	printf("> notreefile = %i\n", notreefile);
+	printf("\n> Begin ASAP core:\n\n");
 
-	printf("\n> Begin ABGD core:\n\n");
-
-	//check that dirfiles ends by a '/' otherwise may have some pb
-
-	if (strrchr(file,'/'))
-		sprintf(dataFilename,"%s",strrchr(file,'/')+1);
+	if (seed_asap== -1)
+		srand( time(NULL) );
 	else
-		sprintf(dataFilename,"%s",file);
-	if (strrchr(dataFilename,'.'))
-		{bout=strrchr(dataFilename,'.'); (*bout) ='\0';}
-//check if output dir file exist an create
+		srand(seed_asap);
+
+	if (strrchr(file_data,'/')!=NULL)
+	{
+		int len_sim_nam= strrchr(file_data,'/') - file_data;
+		simple_name=malloc(sizeof(char)*(len_sim_nam+1));
+		sprintf(simple_name,"%.*s",len_sim_nam,strrchr(file_data,'/')+1);
+//		nametree=malloc(sizeof(char)*(len_sim_nam+1));
+	}
+	else
+	{simple_name=malloc(sizeof(char)*(strlen(file_data)+1));sprintf(simple_name,"%s",file_data);
+//	nametree=malloc(sizeof(char)*(strlen(file_data)+1));
+	}
 
 
-if (stat(dirfiles, &stfile) == -1)
-    mkdir(dirfiles, 0700);
+	if (dirfiles == NULL)
+	{
+		dirfiles = (char *) malloc( (size_t) sizeof(char) * 3);
+		if(!dirfiles)fprintf(stderr, "main: cannot allocate dirfiles bye\n"), exit(2);
+		dirfiles[0] = '.'; dirfiles[1] = '/';dirfiles[2] = '\0';
 
-	f=fopen(file,"r");
-	if (f==NULL)printf("Cannot locate your file. Please check, bye\n"),exit(1);
 
-		if (verbose) fprintf(stderr," Running abgd in verbose mode...\n");
-	simplename = Built_OutfileName( file );
-//	printf("%s\n",simplename);
-
-	mySpecies=malloc(sizeof(int)*nbStepsABGD+1);
-	specInit=malloc(sizeof(int)*nbStepsABGD+1);
-
-	myDist = Compute_myDist(  minDist,  MaxDist,  nbStepsABGD );
-	bcod=malloc(sizeof(double*)*nbStepsABGD);
-
-	NVal=0;
-	output_slope=0;
-	output_groups=0;
-	opt_recursion=1;
+	}
 
 	/*
-		readfile
+
+	*/
+	fout = (char * )malloc( (size_t) sizeof(char) * (strlen(simple_name)+ strlen(dirfiles) + 5));
+	if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
+
+	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + strlen (simple_name) +20)));
+	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);
+	sprintf(fout, "%s%s.all", dirfiles, simple_name);
+
+	asap_param.f_out = fopen(fout, "w+");
+	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
+
+	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
+	sprintf(fname, "%s%s.svg", dirfiles, simple_name);
+
+	svgout = fopen(fname, "w");
+	if (svgout == NULL)fprintf(stderr, "cannot open the graphic output file %s, bye\n", fname), exit(1);
+
+
+	/*
+		Read or build the distance matrix
+	*/
+	c = fgetc(f_in);
+	rewind(f_in);
+	if ( c == '>'){
+		fprintf(stderr, "> asap is reading the fasta file and computing the distance matrix\n");
+		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+	}
+	else
+	{
+		fprintf(stderr, "assuming a distance matrix file. Reading the matrix\n");
+		if (fmeg==0)
+			mat = read_distmat(f_in, ts_tv, NULL, NULL);
+		else
+			fprintf(stderr, "MEGA format not yet implemented\n");
+	}
+	fclose(	f_in);
+	fprintf(stderr,"End of matrix distance\n");
+	if (mat.n<MAXSPECIESGRAPH)
+	widthKlado=WIDTHCLADO/3;
+	else
+	widthKlado=WIDTHCLADO;
+	fprintf(stderr, "  %ld input sequences\n", mat.n);
+
+	t2 = time(NULL);
+
+	/*
+		Get memory for needed struct
 	*/
 
-	c = fgetc(f);
-	rewind(f);
+	asap_param.nbpairs = (mat.n * (mat.n - 1)) / 2;
 
-	if ( c == '>')
+	ListDistance = (DistPair *) malloc( (size_t) sizeof(DistPair) *  asap_param.nbpairs);
+	if (!ListDistance)fprintf(stderr, "main: cannot allocate  ListDistance bye\n"), exit(2);
+//
+	no_node = (int *)malloc( (size_t) sizeof(int) * mat.n);               //indice qui me donne pour une seuqnec i a quel noeud elle est liée à chaque etape de lagglutnage
+	if (!no_node)fprintf(stderr, "main: MEMORY ERROR error can allocate nonode bye\n"), exit(2);
+
+	zenodes = (Node *) malloc( (size_t) sizeof(Node) * ((mat.n*2)-1));
+	if (!zenodes)fprintf(stderr, "main: MEMORY ERROR error can allocate  zenodes bye\n"), exit(2);
+
+	strucompo = (Tabcompo *) malloc( (size_t) sizeof(Tabcompo) * mat.n);
+	if (!strucompo)fprintf(stderr, "main: cannot allocate  strucompo bye\n"), exit(2);
+
+
+	scores = (Results *) malloc(  (size_t) sizeof(Results) * mat.n); //not enough juste a first dim reajusted when nbresulkts greater than mat.n
+	if (!scores)fprintf(stderr, "main: cannot allocate  scores bye\n"), exit(2);
+	//build the sorted struct from smallest dist to higher dist
+	for (i=0;i<mat.n;i++)
+				scores[i].listNodes=malloc(sizeof(int)*mat.n);
+
+	initcomp(&comp, mat.n, stderr, "");
+	inittabcompo(strucompo, mat.n, stderr, "");       /* the structures are oversized currently */
+	initNodes(stderr, zenodes, mat, "");
+
+	/*
+		Set the first n nodes to their id --the leaves--
+	*/
+	for (i = 0; i < mat.n; i++)
+		no_node[i] = i;
+
+
+	/*
+		from the distance matrix, build a sorted list of pairwise_distance, min and max
+	*/
+	mattolist(ListDistance , &mat , &maxDist, &min);
+
+
+	//	for (i=0;i<nb_pairs;i++)
+	//		fprintf(stderr,"%d %f %d %d\n",i,ListDistance[i].d,ListDistance[i].a,ListDistance[i].b);
+
+
+	nbresults = 0;
+
+	last_node = mat.n - 1;
+
+	/*
+		Run ASAP core
+	*/
+
+	fprintf(stderr,"> asap is building and testing all partitions\n  ");
+
+// int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *scores, Tabcompo *strucompo, int nb_pairs, FILE *f_out,double *best, int *fi, FILE *ff, Node *zenodes, int *list_node, int *lastnode, char *ledir, int lenSeq, int replicates,float seuil_pvalue,float pond_pente)
+
+
+	//nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo, nb_pairs, f_out, &best_score, &firstpart, stderr, zenodes, no_node, &last_node, "", len_seq, replicates,seuil_pvalue,pond_pente);
+	nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo,  &best_score, &firstpart,  zenodes, no_node, &last_node,asap_param);
+
+	qsort(scores,nbresults,sizeof (Results ),compareProba);
+	for (i = 0; i < nbresults+1; i++)
+		scores[i].rank_proba=i+1;
+
+	qsort(scores,nbresults,sizeof (Results ),compareParameter);
+	for (i = 0; i < nbresults+1; i++)
+		scores[i].rank_pente=i+1;
+
+
+	max_score=0;
+	scores[0].score=(scores[0].rank_pente*(1.0-asap_param.pond_score))+(scores[0].rank_proba*asap_param.pond_score);
+	min_score=scores[0].score;
+	for (i = 0; i < nbresults+1; i++)
 	{
-	if (verbose) fprintf(stderr,"calculating dist matrix\n");
-		distmat = compute_dis(f,imethode,ts_tv);
-	if (verbose)fprintf(stderr,"calculating dist matrix done\n");
-		}
-	else
-		distmat = read_distmat(f,ts_tv,fmeg);
-
-	printf("ok\n");
-
-		myspar=malloc(sizeof(Spart)*distmat.n);
-		myspar2=malloc(sizeof(Spart)*distmat.n);
-		nb_subsets=malloc(sizeof(int *) *nbStepsABGD);
-
-		for (i=0;i<nbStepsABGD;i++)
-			nb_subsets[i]=malloc(sizeof(int)*2);
-		for (i=0;i<distmat.n;i++)
-		{
-			myspar[i].name=malloc(sizeof(char)*strlen( distmat.names[i])+1);
-			strcpy_spart(myspar[i].name,distmat.names[i]);
-			myspar2[i].name=malloc(sizeof(char)*strlen( distmat.names[i])+1);
-			strcpy_spart(myspar2[i].name,distmat.names[i]);
-			myspar[i].specie=malloc(sizeof(int)*nbStepsABGD);
-			myspar2[i].specie=malloc(sizeof(int)*nbStepsABGD);
-		}
-
-	if (verbose && c=='>')
-	{
-	FILE *ftemp;
-	ftemp=fopen("distmat.txt","w");
-	if (ftemp != NULL)
-		{
-		fprint_distmat(distmat ,ftemp );
-		fclose (ftemp);
-		fprintf(stderr,"Matrix dist is written as distmat.txt\n");
-		}
+		scores[i].score=(scores[i].rank_pente*(1.0-asap_param.pond_score))+(scores[i].rank_proba*asap_param.pond_score);
+		if (max_score <scores[i].score)
+			max_score =scores[i].score;
+		if (min_score >scores[i].score)
+			min_score =scores[i].score;
 	}
+	qsort(scores,nbresults,sizeof (Results ),compareRang);
+	for (i = 0; i < nbresults+1; i++)
+		scores[i].rank_general=i+1;
+
+
+	fprintf(stderr, "\n> 10 Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
+	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
+	int nb_B=(nbresults<10)?nbresults:10;
+	for (i = 0; i < nb_B; i++)
+
+			{
+						char toStar=' ';
+					if (scores[i].d_jump>=minAsapDist && scores[i].d_jump<=maxAsapDist)
+						toStar='*';
+
+			 fprintf(stderr, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
+			    	toStar,
+			 		scores[i].d_jump,
+			 		scores[i].nbspec,
+			      	scores[i].nbspecRec,
+			       	scores[i].proba,
+
+			       	 scores[i].other_parameter *100,
+			       	 scores[i].score);
+			}
 
 	if (withallfiles)
-		{
-		if (verbose)fprintf(stderr,"\nbuilding newick tree for your data (it can take time when many sequences)\n");
-		newickStringOriginal=compute_DistTree(  distmat, dirfiles );
+		ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 
-		newickString= malloc( (size_t)  sizeof(char) * strlen(newickStringOriginal)+1);
-		if (!newickString )
-			printf("pb malloc newick\n"),exit(1);
-		strcpy(newickString,newickStringOriginal);//make a copy because going to modify it in next function
-//		printf("tree ok\n");
-//		print_distmat(distmat);
-		}
-
-//print_distmat(distmat);
-
-
-	switch(imethode){
-
-		case 0:
-			meth="K80 Kimura";
-			break;
-
-		case 1:
-			meth="JC69 Jukes-Cantor";
-			break;
-
-		case 2:
-			meth="N93 Tamura-Nei" ;
-			printf("Please choose another method as Tamura Nei dist method is not fully implemented\n");
-			exit(1);
-			break;
-
-		case 3:
-			meth="SSSI SimpleDistance" ;
-			break;
-
-	}
+	printf("creating histo in %s\n",dirfiles);
+	createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
 
 	/*
-		1.1 From the matrix, extract distance with the help of mask
-	*/
-	mask=(char*)malloc( distmat.n*sizeof(char) );
-	if(!mask)fprintf(stderr, "main: cannot allocate mask, bye<BR>\n");
-	if (verbose)fprintf(stderr,"Writing histogram files\n");
-	sprintf(file_name,"%s/",dirfiles);
- 	createSVGhisto(file_name,distmat,nbbids);
-	if (verbose)fprintf(stderr," histogram Done\nBegining ABGD--->\n");
-
-	for (myD=0;myD<nbStepsABGD;myD++)
-	{
-	if (verbose)fprintf(stderr,"ABGD step %d \n",myD);
-
- 		MaxDist           = myDist[myD];
-		my_abgd.Rank      = -1;
-		my_abgd.Dist      = -1;   /* reset results */
-		my_abgd.theta_hat =  0;
-		flag=1;
-		windsize_min=0;
-		windsize_max=0;
-		NVal=0;
-		output_slope=0;
-		output_groups=0;
-
-		for(j=0; j<distmat.n; j++)mask[j]=1;
-		ValArray = matrix2list( distmat, mask , &NVal);
-
-		if (verbose)fprintf(stderr,"sorting \n");
-		qsort((void *) ValArray, (size_t) NVal, (size_t) sizeof(double), Increase );
-		if (verbose)fprintf(stderr,"done\n");
-	/*
-		2. Find the estimated peak of the derivative on windsize values
-	*/
-		if(windsize_min==0)windsize_min = min_ws( NVal );
-		if(windsize_max==0 || windsize_max>NVal-1)windsize_max = NVal-1;
-
-		if (verbose)fprintf(stderr,"look fisrt abgd\n");
-		my_abgd = find_abgd( ValArray, NVal, windsize_min, windsize_max, output_slope, MaxDist, minSlopeIncrease  );
-		if (verbose)fprintf(stderr,"done\n");
-
-		if(my_abgd.Rank == NVal+0.5){
-
-			printf("Partition %d : found 1 group (prior maximal distance P= %f) \n**Stop here**\n",  myD+1, MaxDist);
-			stop_at_once=1;
-			fflush(stdout);
-
-			mySpecies[myD]=1;
-			myD++;
-
-			free(ValArray);
-
-
-			break;
-		}
-
-	/*
-		3. Extract groups using the limit
-	*/
-	if (verbose)fprintf(stderr,"extract comp\n");
-		comp = extract_composante(  distmat, my_abgd.Dist, mask );
-
-
-
-		i=j=comp.n_in_comp[0];
-		for(c=1;c<comp.nc;c++){
-			i=(comp.n_in_comp[c]<i)?comp.n_in_comp[c]:i;
-			j=(comp.n_in_comp[c]>j)?comp.n_in_comp[c]:j;
-		}
-
-		specInit[myD]=comp.nc;
-
-		bcod[myD]=my_abgd.Dist;
-
-		if (withallfiles)
-			{
-
-			sprintf(file_name,"%s/partinit.%d.txt",dirfiles,myD+1);
-			fout=fopen(file_name,"w");
-			if (fout==NULL)
-				printf("problem opening result file %s\n",file_name), exit(1);
-			sprintf(file_name,"%s/partinit.%d.tree",dirfiles,myD+1);
-			f2=fopen(file_name,"w");
-			print_groups_files_newick( comp ,  distmat ,  fout,newickString  ,f2,0,stdout,"");
-
-			fclose(fout);
-			/* reseting newick string to original */
-			strcpy(newickString,newickStringOriginal);//make a copy because going to modify it in next function
-
-			}
-		else if(notreefile)
-			{
-			sprintf(file_name,"%s/partinit.%d.txt",dirfiles,myD+1);
-			fout=fopen(file_name,"w");
-
-			if (fout==NULL)
-				printf("problem opening result file %s\n",file_name), exit(1);
-
-			print_groups_files(  comp ,  distmat ,  fout,0);
-			fclose(fout);
-			}
-
-		if (withspart) mem_spart_files(comp,myspar,myD,nb_subsets,0,distmat.n,fres);
-
-	/*
-		Try to resplit each group using recursion startegy on already defined groups
+		That
 	*/
 
-		ncomp_primary=comp.nc;
-
-	if (verbose)fprintf(stderr,"entering recursion\n");
-		while( flag ){
-
-			flag=0;                 /* if no sub-split is done, do not start a new round */
-			nc= comp.nc;
-
-				//if (verbose)
-
-				for(a=0; a< nc; a++){
+	fprintf(stderr, "> asap is creating text and graphical output\n");
+	qsort(scores,nbresults,sizeof (Results ),compareSpecies);
 
 
-				struct Composante recursive_comp;
-
-				reset_composante( &recursive_comp );                     /* needed for the free in case of no new group */
-
-				// bzero( (void *)mask, (size_t)distmat.n*sizeof(char) );   /* built mask used to only consider some cells of the matrix */
-				memset((void *)mask, 0, (size_t)distmat.n*sizeof(char));	/* Replaces the above */
-				for(b=0;b<comp.n_in_comp[a]; b++)
-					mask[ comp.comp[a][b] ] = 1;
-
-				vals = matrix2list( distmat, mask , &nval);                                /* built array of pairwise dist */
-				qsort((void *) vals, (size_t) nval, (size_t) sizeof(double), Increase );
-
-				if( nval > 2 ){                                                           /* at least 3 sequences are needed */
-					windsize_min = min_ws( nval );
-					windsize_max= nval-1;
-					recursive_abgd = find_abgd( vals, nval, windsize_min, windsize_max, output_slope, MaxDist ,minSlopeIncrease );
-
-					if(recursive_abgd.Rank != nval+0.5){
-
-						recursive_comp = extract_composante(  distmat, recursive_abgd.Dist, mask );
-
-						if( recursive_comp.nc > 1 ){
-
-							if(verbose){
-
-								printf("Subsequent partition %s\n", (verbose)?"":"(details with -v)" );
-								printf("theta_hat  : %g\n", recursive_abgd.theta_hat );
-								printf("ABGD dist  : %f\n",  recursive_abgd.Dist);
-								printf("ws         : [%d, %d]\n", windsize_min, windsize_max  );
-								printf("Group id   : %d (%d nodes)\n",  a, recursive_comp.nn);
-								printf("-> groups  : %d\n",  recursive_comp.nc);
-
-							//	printf("Subgroups are:\n");
-							//	print_groups( recursive_comp, distmat );
-								printf("\n");
-
-							}
-
-							update_composante(  &comp, a, recursive_comp );
+	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
+	fprintf(svgout, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
 
 
-							flag=1;
+	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
+	clearalltab(strucompo, &comp, mat.n);
 
-						}
+	resetcomp(&comp, mat.n);
 
-					}
-				}
-				free( vals );
-				free_composante( recursive_comp );
-			}
-			round++;
-		}
+	echy = mat.n * SIZEOFTEXT;
+	echx = widthKlado / (float)maxDist;
 
+	print_clado(zenodes, last_node, NULL, echx, echy, (widthKlado - 100) / zenodes[last_node].round, 0,0);
 
+	draw_clado(zenodes, svgout, last_node, mat.n,widthKlado);
 
-		//bcod[myD]=recursive_abgd.Dist;
-		printf("Partition %d : %d / %d groups with / out recursion for P= %f\n",  myD+1, comp.nc,ncomp_primary, MaxDist );
-		fflush(stdout);
-
-		i=j=comp.n_in_comp[0];
-
-		for(c=1;c<comp.nc;c++){
-			i=(comp.n_in_comp[c]<i)?comp.n_in_comp[c]:i;
-			j=(comp.n_in_comp[c]>j)?comp.n_in_comp[c]:j;
-		}
-
-		/*
-			outputting the partitions
-		*/
+	color_clado(zenodes, last_node,&color_ori);
 
 
-		if (withallfiles){
+//	draw_bestlines(zenodes, last_node,svgout, scores, echx, MARGECLADO + ( mat.n * SIZEOFTEXT) + HAUTEURCOURBE, nbresults,min_pvalue);
 
-			sprintf(file_name,"%s/part.%d.txt",dirfiles,myD+1);
-			fout=fopen(file_name,"w");
-
-			if (fout==NULL)
-				printf("problem opening result file %s\n",file_name), exit(1);
-
-			sprintf(file_name,"%s/part.%d.tree",dirfiles,myD+1);
-			f2=fopen(file_name,"w");
-
-			print_groups_files_newick( comp ,  distmat ,  fout,newickString  ,f2,0,stdout,"");
-
-
-			fclose(fout);
-
-			/*
-				reseting newick string to original
-			*/
-			strcpy(newickString,newickStringOriginal);   /* make a copy because going to modify it in next function */
-
-		}
-		else if(notreefile)
-		{
-		sprintf(file_name,"%s/part.%d.txt",dirfiles,myD+1);
-		fout=fopen(file_name,"w");
-
-		if (fout==NULL)
-				printf("problem opening result file %s\n",file_name), exit(1);
-
-		print_groups_files(  comp ,  distmat ,  fout,0);
-
-		fclose(fout);
-		}
-
-		if (withspart) mem_spart_files(comp,myspar2,myD,nb_subsets,1,distmat.n,fres);
-
-
-		mySpecies[myD]=comp.nc;
-
-		if (comp.nc==1) /* found only one part no need to continue */
-		{
-			myD++;
-			break;
-		}
-
-		reset_composante( &comp);
-		free(ValArray);
-	}
- // fprintf(stderr,"***************%d et nc=%d %d \n",myD,comp.nc,stop_at_once);
-	if ((myD==1 && comp.nc<=1) || (myD==1 && stop_at_once==1))
-	   printf("Only one partition found with your data. Nothing to output. You should try to rerun with a lower X (< %f) **Stop here**<BR>\n", minSlopeIncrease);
+	fprintf(svgout, "</svg>\n");
+	fclose(svgout);
+	fgroups=fopen(namegroups,"w");
+	if (fgroups==NULL)
+	printf("Cant write %s\n",namegroups);
 	else
-		{
-
-		sprintf(file_name,"%s/abgd.svg",dirfiles);
-		if(verbose) fprintf(stderr,"writing graphx file\n");
-		CreateGraphFiles(mySpecies, specInit,myDist, myD, ledir, meth, file_name);   /* go for a nice piece of draw */
-		if(verbose) fprintf(stderr,"writing graphx file done\n");
-		printf("\n---------------------------------\n");
-		printf("\nGraphic files (SVG):\n");
-		printf("Summary: %s/%s.abgd.svg\n",dirfiles,simplename);
-		printf("Distance histogram: %s/%s.disthist.svg\n",dirfiles,simplename);
-		printf("Rank distance: %s/%s.rank.svg\n",dirfiles,simplename);
-
-		if (withallfiles)
-			{
-			printf("\n%d Text Files are resuming your work:\n",myD*4);
-			printf("Description of %d different init/recursives partitions in:\n",myD*2);
-			for (c=0;c<myD;c++)
-				printf("%s/%s.[partinit/part].%d.txt\n",dirfiles,simplename,c+1);
-			printf("Description of %d newick trees in from init/recursives partition:\n",myD*2);
-			for (c=0;c<myD;c++)
-				printf("%s/%s.[partinit/part].%d.tree\n",dirfiles,simplename,c+1);
-			}
-		else
-		if (notreefile)
-					{
-			printf("\n%d Text Files are resuming your work:\n",myD*2);
-			printf("Description of %d different init/recursives partitions in:\n",myD*2);
-			for (c=0;c<myD;c++)
-				printf("%s/%s.[partinit/part].%d.txt\n",dirfiles,simplename,c+1);
-
-			}
-
-		if (withspart)
-			{
-			nbreal=((myD-1) < nbStepsABGD)? myD-1 : nbStepsABGD;
-			printf("\nSpart files (%d real steps)\n",nbreal);
-			CreateSpartFile(myspar,myspar2,dirfiles,nbreal,dataFilename,nb_subsets,distmat.n,timeSig,fres,'/',meth,minSlopeIncrease,bcod);
-			}
-
-		printf("\n---------------------------------\n");
-  		}
-
-	if ((withlogfile) && !(stdout_bak < 0) && !(stderr_bak < 0)) {
-		fflush(stdout);
-		fflush(stderr);
-		int dout = dup2(stdout_bak, fileno(stdout));
-		int derr = dup2(stderr_bak, fileno(stderr));
-		close(stdout_bak);
-		close(stderr_bak);
-		clearerr(stdout);
-		clearerr(stderr);
-		fsetpos(stdout, &stdout_pos);
-		fsetpos(stderr, &stderr_pos);
-		if ((dout < 0) || (derr < 0)) {
-			PyErr_SetString(PyExc_SystemError, "abgd_main: Failed to restore output.");
-			return NULL;
-		}
-		printf("< Restored stdout/stderr\n");
-	}
+	draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
+	fprintf(stderr, "> results were write\n");
 
 
-	free_distmat(  distmat );
-	if (stop_at_once==0 )
-	free_composante(comp);
-		if (withallfiles)
-			free(newickString);
 
-	free(bcod);
-	free(mySpecies);
-	free(mask);
-	free(specInit);
+	t5 = time(NULL);
 
-	for (i=0;i<nbStepsABGD;i++)
-			free(nb_subsets[i]);
-	free(nb_subsets);
+if (withallfiles)
+{
+	// all files after some work
+}
 
-	for (i=0;i<distmat.n;i++)
-		{
-			free(myspar[i].name);
-			free(myspar2[i].name);
+	fprintf(stderr, "  partition results are logged in %s and groups.txt and the graphic output is in %s and %s\n", fout,fname,namegroups);
+	free (fout);
+//	free(fileNex);
+//	free(newickStringOriginal);
+//	free(newickString);
+	free (ListDistance);
+	freecomp(&comp, mat.n);
+	free_distmat(mat);
 
-			free(myspar[i].specie);
-			free(myspar2[i].specie);
 
-		}
 
-	free (myspar);
-	free (myspar2);
+	t3 = time(NULL);
+
+	fprintf(stderr, "> asap computation times were:\n");
+
+	fprintf(stderr,"  %2ldm %2lds to read file and compute distance\n", (t2 - t1) / 60, (t2 - t1) % 60);
+	fprintf(stderr,"  %2ldm %2lds to compute and test all partitions\n", (t3 - t2) / 60, (t3 - t2) % 60);
+//	fprintf(stderr,"  %2ldm %2lds to build an nj tree\n", (t5 - t4) / 60, (t5 - t4) % 60);
+	fprintf(stderr,"  --------------\n");
+	fprintf(stderr,"  %2ldm %2lds total\n", (t5 - t1) / 60, (t5 - t1) % 60);
+
+//	fclose(	f_out);
 
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
-static PyObject *
-abgd_foo(PyObject *self, PyObject *args)
-{
-  long num, res;
 
-  if (!PyArg_ParseTuple(args, "l", &num))
-      return NULL;
-  res = num + 42;
-  return PyLong_FromLong(res);
-}
-
-static PyObject *
-abgd_foo2(PyObject *self, PyObject *args)
-{
-  const char *dir;
-
-  if (!PyArg_ParseTuple(args, "s", &dir))
-      return NULL;
-	printf("foo dir = %s\n", dir);
-
-	char file_name[128];
-	sprintf(file_name,"%s/foo.bar", dir);
-	printf("foo file_name = %s\n", file_name);
-
-	FILE *file;
-	file=fopen(file_name,"w");
-	if (file != NULL)
-	{
-	fprintf(stderr,"Matrix dist is written as distmat.txt\n");
-	fprintf(file,"BARBARA\n");
-	fclose (file);
-	}
-  return PyLong_FromLong(1);
-}
-
-static PyMethodDef AbgdMethods[] = {
-  {"main",  abgd_main, METH_VARARGS,
+static PyMethodDef AsapMethods[] = {
+  {"main",  asap_main, METH_VARARGS,
    "Run ASAP for given parameters."},
-  {"foo",  abgd_foo, METH_VARARGS,
-   "Add 42."},
-  {"foo2",  abgd_foo2, METH_VARARGS,
-   "Write temp file."},
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyDoc_STRVAR(abgd_doc,
-"This is a template module just for instruction.");
+PyDoc_STRVAR(asap_doc,
+"Assemble species by automatic partitioning.");
 
-static struct PyModuleDef abgdmodule = {
+static struct PyModuleDef asapmodule = {
   PyModuleDef_HEAD_INIT,
-  "abgd",   /* name of module */
-  abgd_doc, /* module documentation, may be NULL */
+  "asap",   /* name of module */
+  asap_doc, /* module documentation, may be NULL */
   -1,       /* size of per-interpreter state of the module,
                or -1 if the module keeps state in global variables. */
-  AbgdMethods
+  AsapMethods
 };
 
 PyMODINIT_FUNC
-PyInit_abgdc(void)
+PyInit_asapc(void)
 {
 	PyObject *m = NULL;
-  m = PyModule_Create(&abgdmodule);
-	if (m != NULL) {
-		if (PyModule_AddStringConstant(m, "separator", "/")) {
-			Py_XDECREF(m);
-			m = NULL;
-		}
-	}
+  m = PyModule_Create(&asapmodule);
+	// if (m != NULL) {
+	// 	if (PyModule_AddStringConstant(m, "separator", "/")) {
+	// 		Py_XDECREF(m);
+	// 		m = NULL;
+	// 	}
+	// }
 	return m;
 }

@@ -43,10 +43,10 @@ typedef  struct composante {
 //	int **oldcomp;
 	int *altered_comp;         /* all groups that have been altered this round -- composantes newly formed by merging-- */
 	int **altered_comp_prev;   /* a list of all comp that was merged into this comp */
-	
+
 	int naltered; 	    /* nb of altered groups */
 	char *altered; 	    /* an array of 0, one for each group. Becomes temporarily 1 when the group has just changed */
-	
+
 }	Composante;
 
 
@@ -64,10 +64,10 @@ typedef struct node {
 	int anc; 		// Ancestor number in the node array
 	int *desc; 		// Descendnats numbers in the node array
 	long int x;		// x Graphical position of the node *maybe useless*
-	long int y;		// y Graphical position of the node 
+	long int y;		// y Graphical position of the node
 	long int xx;	//  x Graphical position of the box
-	long int yy;	// y Graphical position of the box 
-	int round;		// Round for node creation **redumdant with dist 
+	long int yy;	// y Graphical position of the box
+	int round;		// Round for node creation **redumdant with dist
 	int nbgroups; 	// Nbr of groups if spltting at this node
 	int color;  	// indicating proba
 //	int nbgspec;
@@ -75,25 +75,25 @@ typedef struct node {
 	double dist; 	// Dist for node creation **redumdant with round
 	char *name; 	//Only if node is a leaf
 	int specnumber; // Nbr of species  if splitting under this node
-	double pval; 	// Pvalue of the node 
+	double pval; 	// Pvalue of the node
 	double sum_inter;  	//Sum intra species for the node (all species below the node)
 	double sum_intra; 	//Sum inter species for the node (all species not below the node)
-	double sum_all; 
+	double sum_all;
 	//double tmrca_obs;
 	long int nb_inter; 	//nbr of intra comparaison
 	long int nb_intra; 	//nb of inter comparaison
 	long int nb_all; 	//nbr all comparaison
 	int nbdesc;		//Nb descendants (sizeof of *desc array)
 	double time;	//check
-	int nb_under; 	// Nb leaves under the node 
-	int nbmut_under; 
+	int nb_under; 	// Nb leaves under the node
+	int nbmut_under;
 	int nbmut;
 	char to_draw; //if 1 then draw in yellow thats for cherries....
 	int first_to_draw; // for clado gram: first specie (upper) under the node
 	char to_be_checked; //=0 if skipped becase pvalue is bad =1 if node is going to be seriously evaluated
-	long int replicates; // how many replicates for simulations on this node 
-	double S_all_theo; //Theoritical Sum intra species 
-	double S_intra_theo; //Theoritical Sum inter species 
+	long int replicates; // how many replicates for simulations on this node
+	double S_all_theo; //Theoritical Sum intra species
+	double S_intra_theo; //Theoritical Sum inter species
 } Node;
 
 typedef struct
@@ -138,7 +138,7 @@ typedef struct result
 typedef struct paramet
 {
 char *ledir;
-int lenSeq; 
+int lenSeq;
 int nbpairs;
 
 int replicates;
@@ -220,7 +220,7 @@ void initNodes(FILE *f, Node *zenodes, struct DistanceMatrix mat, char *ledir);
 void initsimnodes(Node *simnodes, int nbfeuilles, FILE *fres);
 void inittabcompo(Tabcompo *strucompo, int nbseq, FILE *ff, char *ledir);
 
- 
+
 void list_species_partition(Node *zenodes, FILE *fres,Results *scores,int lapart,int nb,int *grrr,double v1,double v2,float seuil);
 void list_species_under_node(Node *zenodes, int current_node , FILE *fres,int gr,int *grrr);
 
@@ -228,7 +228,7 @@ void list_species_under_node(Node *zenodes, int current_node , FILE *fres,int gr
 void mattolist(DistPair *g , DistMat *d , float *max, float *min);
 
 //void newStatCoal(Node *zenodes,FILE *fres,int lenSeq,Composante *comp,double pi_inter_obs,double pi_intra_obs,int part,LeftRight *size,double *lengthTreeLeft,double *lengthTreeRight,
-//                 Results *scores,int *list_node,char *ledir,int maxfeuilles,double S_intra_tot_obs,long nb_intra_tot_obs,int replicates);	
+//                 Results *scores,int *list_node,char *ledir,int maxfeuilles,double S_intra_tot_obs,long nb_intra_tot_obs,int replicates);
 
 //void place_two_nodes_firstpos(int* tableau, int taille);
 double poissondev(double mean) ;
@@ -257,5 +257,5 @@ double unirandom();
 
 void WriteJSON(FILE *f, struct DistanceMatrix mat,float ecart_max_min,Composante comp);
 void write_javascript_svg(FILE *svgout);
-	 
+
 #endif

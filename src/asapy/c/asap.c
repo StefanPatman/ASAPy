@@ -124,13 +124,13 @@ int main(int argc, char**argv)
 	    firstpart,
 //	    n_best=0,
 	    color_ori=5,
-	   
+
 	    seed_asap=-1,
 	    *no_node;       // report for each sequence, its current node
-	 
+
 
 	FILE *f_in,
-	     
+
 	     *fgroups,
 //	 	 *ffgroups,
 	     *svgout;
@@ -142,24 +142,24 @@ int main(int argc, char**argv)
 	     *fname,
 	     *namegroups,
 	     *simple_name;
-	
+
 
 //	char nametree[512];
 
 	time_t t1, t2, t3, t5;
 
 	char c;
-	
+
 
 	short int imethode = 1,fmeg = 0, withallfiles = 0;//imethode1 for Jukes
 	int last_node;
-	
+
 	float maxDist,
 	      min,
 	      ts_tv = 2.0;     /* default value for the trans/transv rates for Kimura 2-p */
-	
+
 	double best_score, echx, echy,max_score,min_score;
-	
+
 	int widthKlado;
 	//float seuil_pvalue=0.05;
 
@@ -214,17 +214,17 @@ int main(int argc, char**argv)
 				strcpy(dirfiles, optarg);
 				if (dirfiles[strlen(dirfiles)-1]!='/')
 					strcat(dirfiles,"/");
-			
+
 				if (stat(dirfiles, &st) == -1) {
 					mkdir(dirfiles, 0700);
 				}
-				
+
 				break;
 
 			case 'h':
 				usage(argv[0]);
 				break;
-	
+
 			case 'l':
 				asap_param.lenSeq=atoi(optarg);
 				break;
@@ -248,9 +248,9 @@ int main(int argc, char**argv)
 			case 'p':
 				asap_param.pond_pente = atof(optarg);			/* limit for results to be reported */
 				break;
-				
+
 			case 'x':
-				seed_asap=atoi(optarg); /* give a seed */ 
+				seed_asap=atoi(optarg); /* give a seed */
 
 			default:
 				usage(argv[0]);
@@ -259,12 +259,12 @@ int main(int argc, char**argv)
 	}
 
 	if (argc - optind != 1)usage(argv[0]), exit(1);
-	
+
 	if (seed_asap== -1)
-	srand( time(NULL) );  
+	srand( time(NULL) );
 	else
 	srand(seed_asap);
-	file_data = argv[optind];                          
+	file_data = argv[optind];
 
 	if (strrchr(file_data,'/')!=NULL)
 	{
@@ -284,19 +284,19 @@ int main(int argc, char**argv)
 		dirfiles = (char *) malloc( (size_t) sizeof(char) * 3);
 		if(!dirfiles)fprintf(stderr, "main: cannot allocate dirfiles bye\n"), exit(2);
 		dirfiles[0] = '.'; dirfiles[1] = '/';dirfiles[2] = '\0';
-		
+
 
 	}
-	
+
 	/*
-		
+
 	*/
 	f_in = fopen(file_data, "r");
 	if (f_in == NULL)fprintf(stderr,"cannot open the file_data, bye\n"), exit(1);
 
 	fout = (char * )malloc( (size_t) sizeof(char) * (strlen(simple_name)+ strlen(dirfiles) + 5));
 	if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
-	
+
 	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + strlen (simple_name) +20)));
 	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);
 	sprintf(fout, "%s%s.all", dirfiles, simple_name);
@@ -309,8 +309,8 @@ int main(int argc, char**argv)
 
 	svgout = fopen(fname, "w");
 	if (svgout == NULL)fprintf(stderr, "cannot open the graphic output file %s, bye\n", fname), exit(1);
-	
-	
+
+
 	/*
 		Read or build the distance matrix
 	*/
@@ -343,7 +343,7 @@ int main(int argc, char**argv)
 	*/
 
 	asap_param.nbpairs = (mat.n * (mat.n - 1)) / 2;
-	
+
 	ListDistance = (DistPair *) malloc( (size_t) sizeof(DistPair) *  asap_param.nbpairs);
 	if (!ListDistance)fprintf(stderr, "main: cannot allocate  ListDistance bye\n"), exit(2);
 //
@@ -372,8 +372,8 @@ for (i=0;i<mat.n;i++)
 		Set the first n nodes to their id --the leaves--
 	*/
 	for (i = 0; i < mat.n; i++)
-		no_node[i] = i; 
-		
+		no_node[i] = i;
+
 
 	/*
 		from the distance matrix, build a sorted list of pairwise_distance, min and max
@@ -383,7 +383,7 @@ for (i=0;i<mat.n;i++)
 
 	//	for (i=0;i<nb_pairs;i++)
 	//		fprintf(stderr,"%d %f %d %d\n",i,ListDistance[i].d,ListDistance[i].a,ListDistance[i].b);
-	
+
 
 	nbresults = 0;
 
@@ -424,7 +424,7 @@ for (i=0;i<mat.n;i++)
 	qsort(scores,nbresults,sizeof (Results ),compareRang);
 	for (i = 0; i < nbresults+1; i++)
 		scores[i].rank_general=i+1;
-	
+
 
 	fprintf(stderr, "\n> 10 Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
 	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
@@ -438,15 +438,15 @@ for (i=0;i<mat.n;i++)
 
 			 fprintf(stderr, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
 			    	toStar,
-			 		scores[i].d_jump,     	
-			 		scores[i].nbspec, 
-			      	scores[i].nbspecRec, 
+			 		scores[i].d_jump,
+			 		scores[i].nbspec,
+			      	scores[i].nbspecRec,
 			       	scores[i].proba,
-			   
+
 			       	 scores[i].other_parameter *100,
 			       	 scores[i].score);
 			}
-	
+
 	if (withallfiles)
 		ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 
@@ -464,12 +464,12 @@ for (i=0;i<mat.n;i++)
 	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
 	fprintf(svgout, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
 
-	
+
 	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
 	clearalltab(strucompo, &comp, mat.n);
 
 	resetcomp(&comp, mat.n);
-	
+
 	echy = mat.n * SIZEOFTEXT;
 	echx = widthKlado / (float)maxDist;
 
@@ -487,11 +487,11 @@ for (i=0;i<mat.n;i++)
 	fgroups=fopen(namegroups,"w");
 	if (fgroups==NULL)
 	printf("Cant write %s\n",namegroups);
-	else	
+	else
 	draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
 	fprintf(stderr, "> results were write\n");
 
-	
+
 
 	t5 = time(NULL);
 
@@ -525,5 +525,3 @@ if (withallfiles)
 
 	return 0;
 }
-
-

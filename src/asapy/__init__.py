@@ -1,4 +1,4 @@
-from .core import BarcodeAnalysis, launch
-from . import abgdc
+from .core import PartitionAnalysis, launch
+from . import asapc
 
 import os
