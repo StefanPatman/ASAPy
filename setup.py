@@ -48,7 +48,7 @@ asapmodule = Extension('asapy.asapc',
                         'src/asapy/c/gdtosvg.c',
                         'src/asapy/c/oldfns.c',
                         ],
-                    extra_compile_args = ["-w"], 
+                    extra_compile_args = ["-w"],
                         )
 
 # Get the long description from the README file
@@ -209,7 +209,7 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'asapy=asapy.run:main',
-            # 'asapy-qt=asapy.qt.run:main',
+            'asapy-qt=asapy.qt.run:main',
         ],
     },
 
