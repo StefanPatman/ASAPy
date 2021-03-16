@@ -2,6 +2,7 @@ from multiprocessing import Process
 
 import tempfile
 import shutil
+import pathlib
 from datetime import datetime
 
 from . import asapc
@@ -62,7 +63,7 @@ class PartitionAnalysis():
         # When the last reference of TemporaryDirectory is gone,
         # the directory is automatically cleaned up, so keep it here.
         self._temp = tempfile.TemporaryDirectory(prefix='asap_')
-        self.target = self._temp.name
+        self.target = pathlib.Path(self._temp.name).as_posix()
         p = Process(target=self.run)
         p.start()
         p.join()

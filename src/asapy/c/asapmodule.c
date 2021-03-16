@@ -84,6 +84,28 @@ int parseItem(PyObject *dict, const char *str, const char t, void *var) {
 	return 0;
 }
 
+// Code imported from ABGD
+char *Built_OutfileName( char *file ){
+
+	char * bout;
+	int ii;
+
+	char *simplename;
+
+	bout = ( strrchr(file,'/') == NULL )? file : strrchr(file,'/')+1;        /* either the begining or after the last '/' */
+
+	ii = ( strchr(bout,'.')==NULL )? strlen(bout) : strchr(bout,'.')-bout ;  /* # of char before the first '.' */
+
+
+	simplename=malloc(sizeof(char)*ii+1);
+
+	strncpy(simplename,bout,ii);
+
+	simplename[ii]='\0';
+
+	return simplename;
+}
+
 static PyObject *
 asap_main(PyObject *self, PyObject *args) {
 
@@ -279,17 +301,7 @@ asap_main(PyObject *self, PyObject *args) {
 	else
 		srand(seed_asap);
 
-	if (strrchr(file_data,'/')!=NULL)
-	{
-		int len_sim_nam= strrchr(file_data,'/') - file_data;
-		simple_name=malloc(sizeof(char)*(len_sim_nam+1));
-		sprintf(simple_name,"%.*s",len_sim_nam,strrchr(file_data,'/')+1);
-//		nametree=malloc(sizeof(char)*(len_sim_nam+1));
-	}
-	else
-	{simple_name=malloc(sizeof(char)*(strlen(file_data)+1));sprintf(simple_name,"%s",file_data);
-//	nametree=malloc(sizeof(char)*(strlen(file_data)+1));
-	}
+	simple_name = Built_OutfileName(file_data);
 
 
 	if (dirfiles == NULL)

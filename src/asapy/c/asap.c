@@ -44,9 +44,10 @@
 #include "oldfns.h"
 //#include "drawMat.h"
 #include "gdtosvg.h"
+#ifndef _WIN32
 #include <unistd.h>
-
 #include <dirent.h>
+#endif
 #include <errno.h>
 
 #include <sys/types.h>

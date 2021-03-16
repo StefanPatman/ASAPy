@@ -35,16 +35,21 @@
 #include <time.h>
 #include <float.h>
 #include <math.h>
-#include <unistd.h>
-#include <strings.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef _WIN32
+#include <unistd.h>
+#include <strings.h>
 #include <dirent.h>
+#endif
 #include <sys/stat.h>
 #include <errno.h>  /* errno */
 #include "asap.h"
 #include "oldfns.h"
 
+#ifdef _WIN32
+#define strcasestr strstr
+#endif
 
 
 
@@ -85,7 +90,7 @@ char *rtrim(char *s)
 
 char *trim(char *s)
 {
-    return rtrim(ltrim(s)); 
+    return rtrim(ltrim(s));
 }
 
 void f_html_error(int nb,char *ledir,FILE *f )
@@ -97,20 +102,20 @@ switch (nb)
 	case 2:
 	case 3:
 	case 4:
-	
+
 	case 5:
-	
-	case 10:	
+
+	case 10:
 	fprintf(f,"Pb while reading CGI data. If this problem persists please contact <A HREF=\"mailto:%s\"> web site administrator</A>\n",WEB_ADMIN) ;
 	break;
-	
+
 	case 8:
 	fprintf(f,"Please try to rename your file with \".txt\" extension. If the problem persists or if the file extension is already \".txt\", please contact <A HREF=\"mailto:%s\"> web site administrator</A>\n",WEB_ADMIN) ;
 
 	case 11:
 	fprintf(f,"Your data appears to be a matrix distance but some characters have been found instead of numerical value\n") ;
 	fprintf(f,"(inf or sup matrix are not supported _ yet_)\n") ;	break;
-	
+
 	case 20:
 	case 56:
 	case 144:
@@ -120,45 +125,45 @@ switch (nb)
 	case 60:
 	fprintf(f,"Your data contains at least one other symbol than WSYKVHDB<BR>Please correct it\n");
 	break;
-	
+
     case 50:
     case 66:
 	fprintf(f,"Weird FASTA format . Please check your data\n");
-    break;       
+    break;
 
-    case 95:    
+    case 95:
 	fprintf(f,"Please check the P value you entered\n");
-    break;   
-    
-    case 99:    
+    break;
+
+    case 99:
 	fprintf(f,"FASTA sequences not all same size . Please check your data\n");
-    break;   
-    
+    break;
+
     case 100:
 	fprintf(f,"Length of seq appears to be 0\n");
-    break; 
-    
+    break;
+
   	case 105:
 	fprintf(f,"Either you have a CVS MEGA matrix and didn't check the option in previous page, <BR>either your matrix is not well formated\n");
-    break;   	
-    
+    break;
+
 	case 110:
 	fprintf(f,"ASAP can't deal with sequences which names are only composed of digits, or with \": , ( )\" present in names. <BR>Please add at least one alphabetic character in sequences names or remove others\n");
 	break;
-	
+
     case 111:
 	case 112:
     case 155:
     case 55:
     case 44:
    fprintf(f,"Memory pb. can't malloc. Try with smaller data file\n");
-    break; 
-   
+    break;
+
    	case 177:
      fprintf(f,"Minimum number is 2. Bye\n");
-    break; 
- 
-   
+    break;
+
+
     case 200:
     case 300:
 	fprintf(f,"pb while choosing distance model\n");
@@ -166,28 +171,28 @@ switch (nb)
     case 255:
    fprintf(f,"newick file has some pb.. This should never arrives so.. try again\n");
     break;
-    
+
     case 257:
    fprintf(f,"MEGA distance file not well formated. Please resave your file with MEGA\n");
     break;
-    
+
     case 344:
-  
+
    fprintf(f,"MEGA CSV distance file not well formated. Please resave your file with MEGA\n");
     break;
-     
-    case 343: 
+
+    case 343:
     fprintf(f,"Pb reading MEGA CSV distance file . Keyword \"Table\" not found at bottom of the file\n");
     break;
-    
+
     case 888: //error is already written
-    break; 
-    
+    break;
+
     default:
   fprintf(f,"Undocumented error \n");
     }
 fclose (f), exit_properly(ledir);
- 
+
  }
 
 
@@ -196,9 +201,9 @@ fclose (f), exit_properly(ledir);
 void html_error(int n)
 {
 	printf("error %d\n", n), exit(1);
-	
-	
-	
+
+
+
 }
 /*check that names are uniques in alignment*/
 
@@ -396,7 +401,7 @@ int ReadFastaSequence( FILE *f, struct FastaSeq *laseq, int *lenseq)
 
 	seq[n] = '\0';
 	*lenseq = n;
-    
+
 	laseq->seq = malloc(sizeof(char) * n + 1);
 	strcpy(laseq->seq, trim(seq));
 
@@ -627,6 +632,7 @@ void clean_str(char *ch)
 /*--------------------------------------------*/
 void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FILE *f2, char *ledir,FILE *fres) {
 
+#ifndef _WIN32
 	int i, j, k = 0, ng = 1;
 	char nom[100], *bou;
 	char chiffre[10];
@@ -656,7 +662,7 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 	}
 	clean_str(lastring);
 	fprintf(f2, "%s\n", lastring);
-
+#endif
 
 }
 
@@ -788,7 +794,7 @@ void distanceJC69 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  myma
 			v = (v) / (double)(newl);
 			if (v>=0.75)v=0.74;//SOFIZ
 				h = (-3.0 / 4.0) * log(1.0 - ((4.0 / 3.0) * v));
-		//	if (isnan(h)) h=1.0; 
+		//	if (isnan(h)) h=1.0;
 			if (h == -0)
 				h = 0;
 			mymat.dist[a][b] = mymat.dist[b][a] = h;
@@ -1104,14 +1110,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 	my_mat->names = NULL;
 	my_mat->dist = NULL;
 	printf("Format Mega detected<BR>\n");	fflush (stdout);
-	ptr = (char *)strcasestr((const char *)data, "#mega") + 5; /*mega format 1st line begins by keyword mega*/
+	ptr = (char *)strcasestr((const char *)data, "#MEGA") + 5; /*mega format 1st line begins by keyword mega*/
 	if (ptr == NULL)fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
 
-	if (strcasestr ((const char *) ptr, "dataformat") != NULL)
+	if (strcasestr ((const char *) ptr, "DATAFORMAT") != NULL)
 	{
-		if (strcasestr( ptr, "lowerleft") != NULL)
+		if (strcasestr( ptr, "LOWERLEFT") != NULL)
 			lower = 1;
-		else if (strcasestr( ptr, "upperight") != NULL)
+		else if (strcasestr( ptr, "UPPERIGHT") != NULL)
 			lower = 0;
 		else
 			fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
@@ -1120,14 +1126,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 		fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized"), fclose (fres), exit_properly(ledir);
 
 
-	ptr = strcasestr((const char *)data, "of Taxa :");
+	ptr = strcasestr((const char *)data, "OF TAXA :");
 	if (ptr != NULL)
 		my_mat->n = atol(strchr(ptr, ':') + 1);
 	else
 	{
-		ptr = strcasestr(data, "ntaxa=");
+		ptr = strcasestr(data, "NTAXA=");
 		if (ptr != NULL)
-			my_mat->n = atol(strchr(strcasestr(data, "ntaxa="), '=') + 1);
+			my_mat->n = atol(strchr(strcasestr(data, "NTAXA="), '=') + 1);
 		else
 			fprintf(fres, "ReadMatrixMega_string: Nbr of taxa is not found"), fclose (fres), exit_properly(ledir);
 	}
@@ -1173,12 +1179,12 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 
 		if (strchr(my_mat->names[a], ')') != NULL)
 			remplace(my_mat->names[a], ')', '_');
-        
+
         if (strchr(my_mat->names[a], '<') != NULL)
 			remplace(my_mat->names[a], '<', '_');
         if (strchr(my_mat->names[a], '>') != NULL)
 			remplace(my_mat->names[a], '>', '_');
-        
+
 		nptr = strstr(ptr, name) + 1;
 		ptr = nptr;
 
@@ -1269,7 +1275,7 @@ void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *
 		f_html_error(344,ledir,fres);
 
 	my_mat->n = nb;
-	
+
 
 	my_mat->names = (char **)malloc( (size_t) sizeof(char *) * (my_mat->n + 1) );
 	if ( ! my_mat->names )
@@ -1340,7 +1346,7 @@ void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *
 
 		}
 	}
-	
+
 
 }
 
@@ -1364,6 +1370,16 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 	my_mat.dist = NULL;
 	//fprintf(fres,"read_distmat_string<BR> %d %s",fmega,data),fclose (fres), exit_properly(ledir);
 	fflush(stdout);
+
+	#ifdef _WIN32
+		// Naive solution to replace strcasestr: capitalize everything
+		char *s = data;
+		while (*s) {
+			*s = toupper((unsigned char) *s);
+			s++;
+		}
+	#endif
+
 	if (fmega == 5)
 		readMatrixMegaCVS_string(data, &my_mat, ledir, fres);
 	else if (strcasestr((const char *)data, "#mega") != NULL )
@@ -1382,7 +1398,7 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 
 		ptr = strtok(data, " \n\r");
 		my_mat.n = atol(ptr);
-		
+
 		/*
 			Get memory
 		*/
@@ -1418,7 +1434,7 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 			ptr = strtok(NULL,  " \n\r\t\009");
 			//fprintf(fres,"%d %d %s<BR>\n",nbl,nbc,ptr);
 			if (ptr == NULL || nbl> my_mat.n) break;
-			
+
 			if (nbc == my_mat.n) // we have found a new name so store it
 			{
 				nbl++;
@@ -1428,8 +1444,8 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 				my_mat.names[nbl] = (char *)malloc( (size_t) sizeof(char) * (n + 1) );
 				if (my_mat.names[nbl]==NULL) fprintf(fres, "Not enough memory for %d names<BR>",nbl), fclose (fres), exit_properly(ledir);
 				strncpy(my_mat.names[nbl], ptr, n);  //st si initialised out of the for
-			
-				
+
+
 				my_mat.names[nbl][n] = '\0';
 				nbc = 0;
 			}
@@ -1440,7 +1456,7 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 				my_mat.dist[nbl][nbc] = tempo; //store the value found and
 				if (strlen(end) >0) fprintf(fres, " Pb in your matrix file only symetrical matrix are supported %d %d (%f) %s %s<BR>",nbl,nbc,tempo,ptr,end), fclose (fres), exit_properly(ledir);
 				nbc++;
-					
+
 			}
 		}
         if (ptr==NULL && nbl != my_mat.n -1)
@@ -1515,7 +1531,7 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 
 			mesSeq[nseq].name = malloc(sizeof(char) * nk + 2);
 			if (!mesSeq[nseq].name) fprintf(fres, "READFASTA:MEMORY ERROR error can allocate mesSeq names\n"), fclose (fres), exit_properly(ledir);
-            
+
             char *seqnametocheck = malloc(sizeof(char) * nk + 2);
             strncpy(seqnametocheck, input, nk);
             seqnametocheck[nk] = '\0';
@@ -1527,7 +1543,7 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 			if (check_valid_name(mesSeq[nseq].name) == 0)
 			{
                 if (strchr(mesSeq[nseq].name,'>')!=NULL || strchr(mesSeq[nseq].name,'<')!=NULL)
-                    fprintf(fres, "READFASTA:Pb reading  Name Seq %d contains > or < check your entries <BR>", nseq + 1); 
+                    fprintf(fres, "READFASTA:Pb reading  Name Seq %d contains > or < check your entries <BR>", nseq + 1);
                 else
 				fprintf(fres, "READFASTA:Pb reading  Name Seq %d : %s <BR>", nseq + 1, mesSeq[nseq].name);
                 fclose (fres), exit_properly(ledir);
@@ -1538,7 +1554,7 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 			//fprintf(fres,">> %.10s\n<BR>",input);
 			input = input + k-1; //because +1
 			//fprintf(fres,"+k %.10s\n<BR>",input);
-			
+
 			k = 0;
 
 		}//end of >
@@ -1580,20 +1596,20 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
     if (nseq <=2)
     {
         fprintf(fres, "You need at least 3 sequences to run  asap<BR>\n");
-        fclose (fres); 
+        fclose (fres);
         exit_properly(ledir);
     }
-	
+
     if (check_names(mesSeq, nseq,ledir, fres) == 0)
 	   {
         fprintf(fres, "Two seqs found with same name. Please correct your alignment<BR>\n");
-        fclose (fres); 
+        fclose (fres);
         exit_properly(ledir);
         }
 
 	//for (i=0;i<nseq;i++)
 	//	fprintf(fres,"%s\n<BR>",mesSeq[i].seq);
-	
+
 	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,ledir, fres);
 
 	//clean everything temporaly needed
@@ -1693,7 +1709,7 @@ struct DistanceMatrix read_distmat(  FILE *f_in , float ts_tv, char *ledir, FILE
 			gpos = ftell(f_in);
 			while ( ( (letter = fgetc(f_in)) != '\n') && !feof(f_in))
 				if (letter == ' ' ||  letter == '\t') c++;
-//			printf("%d trouves sur ligne\n",c);	
+//			printf("%d trouves sur ligne\n",c);
 			if (c < my_mat.n - 1)
 				{matinf = 1;
 				fprintf(stderr,"mat INF found\n");}
@@ -1747,4 +1763,3 @@ void free_distmat(  struct DistanceMatrix mat ) {
 	free(mat.dist);
 	free(mat.names);
 }
-

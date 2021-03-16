@@ -47,7 +47,9 @@ asapmodule = Extension('asapy.asapc',
                         'src/asapy/c/draw.c',
                         'src/asapy/c/gdtosvg.c',
                         'src/asapy/c/oldfns.c',
-                        ])
+                        ],
+                    extra_compile_args = ["-w"], 
+                        )
 
 # Get the long description from the README file
 long_description = (here / 'README.md').read_text(encoding='utf-8')
