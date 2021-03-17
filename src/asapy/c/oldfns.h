@@ -20,7 +20,7 @@ void remplace(char *name,char c,char newc);
 int check_names(struct FastaSeq *mesSeq, int nbseq,char *ledir,FILE *fres);
 int ReadFastaSequence( FILE *f, struct FastaSeq *laseq,int *len_seq);
 int check_compat(char *s1,char *s2,int l);
-int search_delim(char *cgiinput, char *delim,char *ledir,FILE *fres);
+int search_delim(char *cgiinput, char *delim,int *err);
 int check_valid_name(char *name);
 
 long del_sequences(char *seq1, char *seq2, long L);
@@ -35,7 +35,7 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input,int method,float t
 
 char IsTransition( char nt1, char nt2 );
 char IsTransversion( char nt1, char nt2 );
-char **getMultPartData(int *nb,char *nf,char *ledir,FILE *fres);
+char **getMultPartData(int *nb,char *nf,int *err);
 
 double P_given_t_R( double t, double R );
 double Q_given_t_R( double t, double R );

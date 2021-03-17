@@ -453,7 +453,7 @@ int check_valid_name(char *name)
 /*as the form is multipart we have to find the string which is going to separate the
 differents fields. delimiter are different among the browsers _for fun_
 return number of fields*/
-int search_delim(char *cgiinput, char *delim, char *ledir, FILE *fres)
+int search_delim(char *cgiinput, char *delim,  int *err)
 {
 	int i = 0, lequel = 0;
 	char *begin, *end;
@@ -468,8 +468,8 @@ int search_delim(char *cgiinput, char *delim, char *ledir, FILE *fres)
 	lequel = i;
 	if (i == 2)
 	{
-		printf("<BR>%s<BR>", cgiinput);
-		html_error( 4 );
+		*err=9;
+		return (0);
 	}
 
 	end = begin + strlen(achercher[lequel]); //look for delimitor 's end
@@ -477,7 +477,9 @@ int search_delim(char *cgiinput, char *delim, char *ledir, FILE *fres)
 
 	while ((*(end + i) != ' ') && (*(end + i) != 13) && (*(end + i) != 10) && (*(end + i) != '\0'))
 		i++;
-	if (*(end + i) == '\0' || i >= 256) {fprintf(fres, "PB With your browser delimiter not found %d %.128s <BR>\n", i, end), fclose (fres), exit_properly(ledir);} //too much char in the delim
+	if (*(end + i) == '\0' || i >= 256)
+		{*err=10;return(0);}
+	//{fprintf(fres, "PB With your browser delimiter not found %d %.128s <BR>\n", i, end), fclose (fres), exit_properly(ledir);} //too much char in the delim
 
 	// copy the clean delimitor
 	strncpy(delim, begin, strlen(achercher[lequel]) + i);
@@ -494,7 +496,7 @@ int search_delim(char *cgiinput, char *delim, char *ledir, FILE *fres)
 /*------------------------------------------------------*/
 /** Read the CGI input and place all name/val pairs into list.        **/
 /** Returns list containing name1, value1, name2, value2, ... , NULL  **/
-char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
+char **getMultPartData(int *nb, char *nf,  int *no_err) {
 	int i, j, k, ii ;
 
 	int content_length;
@@ -509,14 +511,14 @@ char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
 //    FILE *ftemp;
 
 	// perform some validity tests on cgi input
-	if ( !(content_length = atoi(getenv("CONTENT_LENGTH"))) ) f_html_error( 1 ,ledir,fres);
-	if ( !(cgiinput = (char *) malloc(content_length + 1)) )f_html_error( 2,ledir,fres);
-	if (!fread(cgiinput, content_length, 1, stdin)) f_html_error( 3,ledir,fres );
+	if ( !(content_length = atoi(getenv("CONTENT_LENGTH"))) ) {*no_err=1; return(NULL);};
+	if ( !(cgiinput = (char *) malloc(content_length + 1)) ) {*no_err=2; return(NULL);};
+	if (!fread(cgiinput, content_length, 1, stdin))  {*no_err=3; return(NULL);};
 //    if (strstr(getenv("HTTP_USER_AGENT"),"MSIE")!=NULL)
-//        	{printf("<HR>EXPLORER found. It was not tested but you may be able to have results<HR><BR>");}
+  //     	{printf("<HR>EXPLORER found. It was not tested but you may be able to have results<HR><BR>");}
 
 	cgiinput[content_length] = '\0' ;
-
+//printf("%s\n",cgiinput); exit(1);
 //	DEBUG CGI WITH THIS
 	/*	FILE *ftemp=fopen("/temp/cgivars","w");
 		if (ftemp==NULL) exit(1);
@@ -529,13 +531,25 @@ char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
 		exit(1);*/
 //END of DEBUG
 
-	paircount = search_delim(cgiinput, delim, ledir, fres); /*search the delimiter and how many of them*/
+	paircount = search_delim(cgiinput, delim,  no_err); /*search the delimiter and how many of them*/
+	//printf("termine ici %d %s\n<HR>",paircount,cgiinput);exit(1);
+	//if (paircount<=2){fprintf(fres, "PB parsing form: fields are not read <BR>\n"), fclose (fres), exit_properly(ledir);}
+if (paircount<=2)
+ 	{*no_err=4; return(NULL);};
 	cgivars = (char * *) malloc(2 * paircount * sizeof(char *)) ;
+
+	if (cgivars==NULL)
+		{*no_err=5; return(NULL);};
+
+
+		//printf("%s<HR>",cgiinput);exit(1);
 	end = strstr(cgiinput, delim);
 	begin = cgiinput;
 //	f=fopen("/temp/ttt","w");if (f!=NULL){fprintf(f,"%d\n%s",content_length,cgiinput);fclose(f);}
 	bb = strstr(cgiinput, "filename="); //get the name of the file user has given
 	i = 0;
+
+
 	if (bb != NULL)
 	{
 		bb = bb + strlen("filename=") + 1;
@@ -558,19 +572,24 @@ char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
 			break;
 		newName = strchr(end, '='); // looking for begining of name
 		if (newName == NULL)
-			fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
+			{*no_err=6; return(NULL);};
+			//fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
 
 
 
 		newName += 2; // skip the = and the "
 		k = 0;
 		while (*(newName + k) != '"' && (newName + k) != NULL) k++; // look for end of name
-		if ((newName + k) == NULL)		fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
-		if (k == 0) printf("arrrg %d\n", i); //should never arrives exept if someone put a field with no name in the html form...
+		if ((newName + k) == NULL)
+			//fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
+		if (k == 0) {*no_err=7; return(NULL);}; //should never arrives exept if someone put a field with no name in the html form...
 		cgivars[i] = malloc (sizeof(char) * (k + 2));
+		if (cgivars[i]==NULL)
+{*no_err=7; return(NULL);};
+			//{printf("rate");fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);}
 		strncpy(cgivars[i], newName, k);
 		cgivars[i][k] = '\0';
-
+		//printf("-->%s\n<BR>",cgivars[i]);
 
 		if (strstr(cgivars[i], "ubmit") != NULL)
 		{ paircount = i;  break;} //last field is button submit and we don't care
@@ -584,7 +603,9 @@ char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
 				if (newName != NULL)
 					break;
 			}
-			if (newName == NULL) 		fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
+			if (newName == NULL)
+				{*no_err=8; return(NULL);};
+				//fprintf(fres, "PB parsing form <BR>\n"), fclose (fres), exit_properly(ledir);
 			newName += strlen(cont_type[ii]); // so newname points on the real begining of the file...
 			k = 0;
 		}
@@ -603,11 +624,13 @@ char **getMultPartData(int *nb, char *nf, char *ledir, FILE *fres) {
 
 		begin = end + 1;
 		i = i + 2;
-
+if (i>=(2*paircount))
+{*no_err=9; return(NULL);};
+	//{fprintf(fres, "keyword Submit not found!!! <BR>\n"), fclose (fres), exit_properly(ledir);
 	}
 	/*clean the input i've parsed everything...*/
 	free(cgiinput) ;
-
+	*no_err=0;
 	*nb = i / 2;
 	return cgivars ;
 
@@ -662,6 +685,7 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 	}
 	clean_str(lastring);
 	fprintf(f2, "%s\n", lastring);
+
 #endif
 
 }
@@ -1110,14 +1134,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 	my_mat->names = NULL;
 	my_mat->dist = NULL;
 	printf("Format Mega detected<BR>\n");	fflush (stdout);
-	ptr = (char *)strcasestr((const char *)data, "#MEGA") + 5; /*mega format 1st line begins by keyword mega*/
+	ptr = (char *)strcasestr((const char *)data, "#mega") + 5; /*mega format 1st line begins by keyword mega*/
 	if (ptr == NULL)fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
 
-	if (strcasestr ((const char *) ptr, "DATAFORMAT") != NULL)
+	if (strcasestr ((const char *) ptr, "dataformat") != NULL)
 	{
-		if (strcasestr( ptr, "LOWERLEFT") != NULL)
+		if (strcasestr( ptr, "lowerleft") != NULL)
 			lower = 1;
-		else if (strcasestr( ptr, "UPPERIGHT") != NULL)
+		else if (strcasestr( ptr, "upperight") != NULL)
 			lower = 0;
 		else
 			fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
@@ -1126,14 +1150,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 		fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized"), fclose (fres), exit_properly(ledir);
 
 
-	ptr = strcasestr((const char *)data, "OF TAXA :");
+	ptr = strcasestr((const char *)data, "of Taxa :");
 	if (ptr != NULL)
 		my_mat->n = atol(strchr(ptr, ':') + 1);
 	else
 	{
-		ptr = strcasestr(data, "NTAXA=");
+		ptr = strcasestr(data, "ntaxa=");
 		if (ptr != NULL)
-			my_mat->n = atol(strchr(strcasestr(data, "NTAXA="), '=') + 1);
+			my_mat->n = atol(strchr(strcasestr(data, "ntaxa="), '=') + 1);
 		else
 			fprintf(fres, "ReadMatrixMega_string: Nbr of taxa is not found"), fclose (fres), exit_properly(ledir);
 	}

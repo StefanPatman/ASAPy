@@ -670,7 +670,7 @@ for (i = 0; i < comp->naltered; i++)
 
 /*--------------------------------------------------*/
 /*renvoie le nbre de noueds fils ayant une proba < score recursivement pour chaque noued un nbre en plus.. mais a appeler sur chaque noued de compo pour avoir le nbre en plus*/
-int  specie_node_recurse(Node *zenodes,int n,double score)
+int  (specie_node_recurse)(Node *zenodes,int n,double score)
 {
 int i,m;
 //printf("->%d \n",zenodes[n].nbdesc);	
@@ -708,7 +708,7 @@ int compo_rspecie(Composante *comp, Node *zenodes, double seuil,int *list_node,i
 	int current_node,nb_rplus=0,i,j=0, k;
 //printf("nc:%d (%d)\n",comp->nc,nbseq);
 
-
+scores[round].nb_nodes=0;
 	for( i =0; i< nbseq ;i++)
 	{
 		if (comp->n_in_comp[i]!=0)
@@ -726,7 +726,7 @@ int compo_rspecie(Composante *comp, Node *zenodes, double seuil,int *list_node,i
 				nb_rplus += specie_node_recurse(zenodes,current_node,seuil);
 
 			scores[round].listNodes[j]=list_node[comp->comp[i][0]];
-
+		scores[round].nb_nodes++;
 	//	printf("noeud:%d nbplu:%d desc=%d  p=%f under=%d[",current_node,nb_rplus,zenodes[current_node].nbdesc,zenodes[current_node].pval,zenodes[current_node].nb_under);
 	//	int oo;
 	//	for (oo=0;oo<zenodes[current_node].nbdesc;oo++)

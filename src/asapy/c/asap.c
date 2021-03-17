@@ -117,7 +117,7 @@ int main(int argc, char**argv)
 	Tabcompo *strucompo;       /* each elemnt store how many groups and how many sequences in each group */
 	Node *zenodes;             /* Nodes of the hierarchical clusterting tree */
 	Parameter asap_param;  		/*stuff for asap*/
-
+Spart *myspar;
 	int i,
 //		*grp,
 //	    nb_pairs,
@@ -143,14 +143,14 @@ int main(int argc, char**argv)
 	     *fname,
 	     *namegroups,
 	     *simple_name;
-
+	char *meth[5]={ "K80_Kimura","JC69_Jukes-Cantor","N93_Tamura-Nei" , "Simple_Dist"};
 
 //	char nametree[512];
 
 	time_t t1, t2, t3, t5;
 
 	char c;
-
+		char thedate[80];
 
 	short int imethode = 1,fmeg = 0, withallfiles = 0;//imethode1 for Jukes
 	int last_node;
@@ -158,7 +158,7 @@ int main(int argc, char**argv)
 	float maxDist,
 	      min,
 	      ts_tv = 2.0;     /* default value for the trans/transv rates for Kimura 2-p */
-
+	int nbBestAsap=10;
 	double best_score, echx, echy,max_score,min_score;
 
 	int widthKlado;
@@ -168,9 +168,15 @@ int main(int argc, char**argv)
         extern  int optind;
 
 		float minAsapDist=0.005,maxAsapDist=0.05;
-
+struct stat     statbuf;
+	struct tm      *tm;
 
 	struct stat st = {0};
+
+	stat(argv[0], &statbuf);
+    tm = localtime(&statbuf.st_mtime);
+	 strftime(thedate,80,"%FT%T", tm); // 11/19/20 - 05:34PM
+
 
 
 	/*
@@ -331,6 +337,17 @@ int main(int argc, char**argv)
 	}
 	fclose(	f_in);
 	fprintf(stderr,"End of matrix distance\n");
+	myspar=malloc(sizeof(Spart)*mat.n);
+
+	/*for (i=0;i<mat.n;i++)
+		{
+			//myspar[i].name=malloc(sizeof(char)*strlen( mat.names[i])+1);
+			//strcpy(myspar[i].name,mat.names[i]);
+
+			myspar[i].specie=malloc(sizeof(int)* nbBestAsap);
+
+		}*/
+
 	if (mat.n<MAXSPECIESGRAPH)
 	widthKlado=WIDTHCLADO/3;
 	else
@@ -429,7 +446,7 @@ for (i=0;i<mat.n;i++)
 
 	fprintf(stderr, "\n> 10 Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
 	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
-	int nb_B=(nbresults<10)?nbresults:10;
+	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
 
 			{
@@ -448,11 +465,12 @@ for (i=0;i<mat.n;i++)
 			       	 scores[i].score);
 			}
 
-	if (withallfiles)
-		ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
-
+	/*if (withallfiles)
+		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
+	ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);*/
 	printf("creating histo in %s\n",dirfiles);
-	createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
+	//createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
+	createSVGhisto(dirfiles,mat,20,scores, nbresults,"");
 
 	/*
 		That
@@ -469,7 +487,7 @@ for (i=0;i<mat.n;i++)
 	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
 	clearalltab(strucompo, &comp, mat.n);
 
-	resetcomp(&comp, mat.n);
+
 
 	echy = mat.n * SIZEOFTEXT;
 	echx = widthKlado / (float)maxDist;
@@ -481,6 +499,28 @@ for (i=0;i<mat.n;i++)
 	color_clado(zenodes, last_node,&color_ori);
 
 
+/*	for (i=0;i<last_node;i++)
+	{
+
+		fprintf(stderr,"node:%d (round:%d)(dist:%f)(groups=%d)(pval:%e) (nb_under:%d)(nbspec:%d)(nbdesc:%d)(first2draw:%d)\n",
+		i,zenodes[i].round,zenodes[i].dist,zenodes[i].nbgroups,zenodes[i].pval,zenodes[i].nb_under,zenodes[i].specnumber,zenodes[i].nbdesc,zenodes[i].first_to_draw);
+
+
+	}*/
+//int j;
+	/*for (i=0;i<nbresults;i++)
+	{
+		fprintf(stderr,"score:%d (grouups:%d) (nbsp=%d)(nbspecrec:%d )(score:%f)(d_j:%f d:%f) (nodes:",
+			i,scores[i].nbgroups,scores[i].nbspec,scores[i].nbspecRec,scores[i].score,scores[i].d_jump,scores[i].d);
+		for(j=0;j<scores[i].nbgroups;j++)
+		fprintf(stderr,"%d ",scores[i].listNodes[j]);
+	fprintf(stderr,")\n");
+
+
+
+	}*/
+
+
 //	draw_bestlines(zenodes, last_node,svgout, scores, echx, MARGECLADO + ( mat.n * SIZEOFTEXT) + HAUTEURCOURBE, nbresults,min_pvalue);
 
 	fprintf(svgout, "</svg>\n");
@@ -490,18 +530,52 @@ for (i=0;i<mat.n;i++)
 	printf("Cant write %s\n",namegroups);
 	else
 	draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
-	fprintf(stderr, "> results were write\n");
+//printf("write \n");
+	for (i=0;i<mat.n;i++)
+		{
+			int n=zenodes[i].first_to_draw; //assign ed in print_clado
+			if (n>=mat.n)printf("error***** %d \n",n);
+			myspar[n].name=malloc(sizeof(char)*strlen( mat.names[i])+1);
+			strcpy(myspar[n].name,mat.names[i]);
+			//printf("i:%d %d %s %s\n",i,n,myspar[n].name,mat.names[i]);
+			myspar[i].specie=malloc(sizeof(int)* nb_B+1);
+
+		}
+		/*for (i=0;i<mat.n;i++)
+		printf("i:%d %s\n",i,myspar[i].name);*/
+	//qsort(scores,nbresults,sizeof (Results ),compareRang);
+if (withallfiles)
+{
+	int **o_sp;
+		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
+	qsort(scores,nbresults,sizeof (Results ),compareRang);
 
 
+	o_sp=malloc(sizeof(int*)*nb_B);
+	for (i=0;i<nb_B;i++)
+		o_sp[i]=malloc(sizeof(int)*2);
+	//fprintf(stderr,"go ecrit\n");
+	ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);
+	//fprintf(stderr,"go order\n");
+	order_spart(o_sp,nb_B,myspar,mat.n);
+	//fprintf(stderr,"go create\n");
+	CreateSpartFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
+	for (i=0;i<nb_B;i++)
+		free(o_sp[i]);
+	free(o_sp);
+}
+	fprintf(stderr, "> results were write \n");
 
 	t5 = time(NULL);
 
-if (withallfiles)
-{
-	// all files after some work
-}
+	resetcomp(&comp, mat.n);
+	fprintf(stderr, "  partition results are logged in: \n");
+	fprintf(stderr, "\tFull results: %s\n",fout);
+	fprintf(stderr, "\tThe csv file of rank x: %sgroupe_x\n",dirfiles);
+	fprintf(stderr, "\tThe result file of rank x: %sgroup_x\n",dirfiles);
+	fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
+	fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
 
-	fprintf(stderr, "  partition results are logged in %s and groups.txt and the graphic output is in %s and %s\n", fout,fname,namegroups);
 	free (fout);
 //	free(fileNex);
 //	free(newickStringOriginal);

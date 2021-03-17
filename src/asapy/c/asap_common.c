@@ -147,6 +147,7 @@ int compareProba(void const *a, void const *b)
 	else return (1);
 }
 
+
 /*--------------------------------------------------*/
 /*ascending sort on asap rank*/
 int compareRang(void const *a, void const *b)
@@ -230,6 +231,63 @@ int compareCoord(void const *a, void const *b)
 
 	
 
+}
+
+/*static int simplecompare (void const *a, void const *b)
+{
+
+   int const *pa = a;
+   int const *pb = b;
+
+
+   return *pb - *pa;
+}*/
+/*static int simplecompare(const void* p1, const void* p2) {
+  int* arr1 = (int*)p1;
+  int* arr2 = (int*)p2;
+
+ // printf("%d -->%d \n",arr2[0], arr1[0]);
+  int diff1 = arr2[0] - arr1[0];
+  return diff1;
+
+}*/
+static int simplecompare(const void* p1, const void* p2) {
+  int** array21 = (int**)p1;
+  int** array22 = (int**)p2;
+    //printf("%d -->%d \n",*array21[0], *array22[0]);
+  int diff1 = *array22[0] - *array21[0];
+  return diff1;
+
+}
+
+
+void order_spart(int **o_sp,int nb_B,Spart *myspart,int nbsp)
+{
+int i,j,max=0;
+
+for (i=0;i<nb_B;i++)
+{
+	max=0;
+	/*for(j=0;j<nbsp;j++)
+	
+		printf("----> %d \n",myspart[j].specie[i]);
+printf("\n**********\n");*/
+	for(j=0;j<nbsp;j++)
+	{
+		//printf("-- %d %d %d %d \n",i,j,myspart[j].specie[i],max);
+		if (max< myspart[j].specie[i])
+			max=myspart[j].specie[i];
+	}
+	//printf("\n--------\n");
+	o_sp[i][1]=i;
+	o_sp[i][0]=max;
+}
+/*printf("\n**********\n");
+for (i=0;i<nb_B;i++) printf("%d %d\n",o_sp[i][0],o_sp[i][1]);
+printf("\n--------------------------\n");*/
+qsort (o_sp,nb_B , sizeof(int *),simplecompare);
+//for (i=0;i<nb_B;i++) printf("%d %d\n",o_sp[i][0],o_sp[i][1]);
+//printf("\n--------------------------\n");
 }
 
 
@@ -809,7 +867,7 @@ void print_clado(Node *zenodes, int current_node , FILE *fres, double echx, doub
 		zenodes[current_node].yy= feuilles * SIZEOFTEXT;
 		zenodes[current_node].xx = 5;
 		zenodes[current_node].first_to_draw=feuilles;
-
+		
 		feuilles++;
 	}
 	else
@@ -938,7 +996,7 @@ int i,j,k;
 int *histo;
 float maxi=0,maxidist;
 char chaine [12];
-
+int nbcum;
 int largeur=360;
 	int hauteur=260;
 
@@ -972,11 +1030,11 @@ int largeur=360;
 	histo=malloc(sizeof(int)*nbbids+1);
 	if (histo==NULL)
 	fprintf(stderr,"pb malloc histo(1)\n"),exit(1);
-	
-	histocum=malloc(sizeof(float)*nbcomp+1);
-	if (histo==NULL)
+
+	nbcum=(dist_mat.n*dist_mat.n-1)/2;
+	histocum=malloc(sizeof(float)*nbcum+1);	
+	if (histocum==NULL)
 	fprintf(stderr,"pb malloc histo(2)\n"),exit(1);
-	
 	for (i=0;i<nbbids;i++)histo[i]=0;
 
 	k=0;
@@ -1000,6 +1058,7 @@ int largeur=360;
 		for (j=i+1;j<dist_mat.n;j++)
 			{
 			k=dist_mat.dist[i][j]/intervalle;
+			if (k >nbbids) k=nbbids;
 			histo[k]++;
 			}
 			
@@ -1037,7 +1096,7 @@ for (i=0;i<nbbids;i++)
 			
 			
 	fprintf(svgout,"<text x=\"5\" y=\"15\" style=\"font-family: monospace; font-size: 10px;\">Nbr</text>\n");
-	  fprintf(svgout,"<text x=\"270\" y=\"280\" style=\"font-family: monospace; font-size: 10px;\">Dist. value</text>\n");
+	  fprintf(svgout,"<text x=\"270\" y=\"280\" style=\"font-family: monospace; font-size: 10px;\">Dist. Dt</text>\n");
 
 //plotting squares and values and ticks on x axis; write the image map using the exact same values  
 	for (i=0;i<nbbids;i++)
@@ -1122,7 +1181,7 @@ for (j=0,i = nbresults - 1; i >= 0; i--)
                                 x1,marge+hauteur+5,x1,marge+hauteur+5,chaine);
                         }
                 
-                fprintf(svgout,"<text x=\"%d\" y=\"%d\" style=\"font-family: monospace; font-size: 10px;\">Dist. value</text>\n",5,8);
+                fprintf(svgout,"<text x=\"%d\" y=\"%d\" style=\"font-family: monospace; font-size: 10px;\">Dist. Dt</text>\n",5,8);
 	    	fprintf(svgout,"<text x=\"%d\" y=\"%d\" style=\"font-family: monospace; font-size: 10px;\">Rank</text>\n",320,230);
                         
         fprintf(svgout,"<polyline style=\"stroke: %s; stroke-width:1;fill: none;\"  points=\"",colors[2]); 
@@ -1172,7 +1231,7 @@ for (i = nbresults - 1; i >= 0; i--)
 
 
 	free(histo);
-
+	free(histocum);
 
 }
 
@@ -1185,7 +1244,7 @@ void CreateCurve2(Results *scores,  int nbresults, char *dirfiles, char *dataFil
 	int i,j=0, x = 0, y = 0, xo = 0, yo = 0,yo1,c,
 	       bord = 20,
 	       hauteur = HAUTEURCOURBE,
-	      
+	      x_djump,
 	    
 	       nbticks;
 
@@ -1250,9 +1309,10 @@ for (i = nbresults - 1,j=0; i >= 0; i--)
 	{
 
 		x = (double)(scores[i].d * echellex) + MARGECLADO;
-		
+		x_djump=(double)(scores[i].d_jump * echellex) + MARGECLADO;
 		//y = hauteur + bord - ((scores[i].score) * echelleY1);
 		y = hauteur + bord - ((max_score-scores[i].score) * echelleY1);
+
 		if (xo != -1)
 				{
 		
@@ -1267,7 +1327,8 @@ for (i = nbresults - 1,j=0; i >= 0; i--)
 		//	fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", j, x, HAUTEURCOURBE+bord, x, hauteurMax+bord);
 		//fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x, HAUTEURCOURBE+bord, x, hauteurMax+bord);
 			fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x, y, x, hauteurMax+(2*bord));
-				
+		//	fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"red\" />\n", scores[i].rank_general, x_djump, y, x_djump, hauteurMax+(2*bord));
+			 fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"    x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"red\" stroke-dasharray=\"5, 10\"/>\n",scores[i].rank_general, x_djump, y, x_djump, hauteurMax+(2*bord));
 //fprintf(svgout, " <circle id=\"bestScore%d\" onmousemove=\"ShowTooltip(evt, %s)\"   onmouseout=\"HideTooltip(evt)\" onclick=\"circle_click(evt,%d,%f,%d,%d);\" cx=\"%d\" cy=\"%d\" r=\"7\" style=\"fill:%s;stroke:black;\" />\n", 
 //				i,leg,j, scores[i].d, scores[i].nbspecRec,scores[i].rank_general, x, y,LavaColors[c]);
 			fprintf(svgout, " <circle id=\"bestScore%d\" onmousemove=\"ShowTooltip(evt, %s)\"   onmouseout=\"HideTooltip(evt)\" onclick=\"circle_click(%d);\" cx=\"%d\" cy=\"%d\" r=\"7\" style=\"fill:%s;stroke:black;\" />\n", 
@@ -1308,6 +1369,8 @@ void write_javascript_svg(FILE *svgout)
 	fprintf(svgout, "		{\n");
 	fprintf(svgout, "		svgItemold = document.getElementById(\"bestline\"+oldy);\n");
 	fprintf(svgout, "		svgItemold.setAttribute(\"visibility\",\"hidden\");\n\n");
+	fprintf(svgout, "		svgItemjumpold = document.getElementById(\"bestlinejump\"+oldy);\n");
+	fprintf(svgout, "		svgItemjumpold.setAttribute(\"visibility\",\"hidden\");\n\n");
 	
 	fprintf(svgout, "      	svg_courbe = document.getElementById(\"svg1\");\n");
 	fprintf(svgout, "       svgDoc= svg_courbe.contentDocument;\n");
@@ -1328,8 +1391,12 @@ void write_javascript_svg(FILE *svgout)
 	fprintf(svgout, "		}\n");
 	
 	fprintf(svgout, "	svgItem = document.getElementById(\"bestline\"+n);\n");
+	fprintf(svgout, "	svgItemjump = document.getElementById(\"bestlinejump\"+n);\n");
+
 	fprintf(svgout, "   if (a_effacer==0)\n");
-	fprintf(svgout, "		svgItem.setAttribute(\"visibility\",\"visible\");\n");
+	fprintf(svgout, "		{svgItem.setAttribute(\"visibility\",\"visible\");\n");
+fprintf(svgout, "		svgItemjump.setAttribute(\"visibility\",\"visible\");}\n");
+
 
 	 fprintf(svgout, "	svg_courbe = document.getElementById(\"svg1\");\n");
 	fprintf(svgout, "	svgDoc= svg_courbe.contentDocument;\n");
@@ -1634,11 +1701,14 @@ if (zenodes[nodetodraw].nb_under!=1)
 int nothing_good_under(Node *zenodes,int nodetodraw,double seuil)
 {
 int l;
+//int test=0;
 for (l=0;l<zenodes[nodetodraw].nbdesc;l++)	
 		{
 			int n=	zenodes[nodetodraw].desc[l];
+			//fprintf(stderr,"inside ng-- >node %d pval:%e  under:%d\n",n,zenodes[n].pval,zenodes[n].nb_under);
 			if (zenodes[n].pval<seuil && zenodes[n].nb_under>1)	
 				return (0);	
+			
 		}
 return (1)	;	
 }
@@ -1664,18 +1734,34 @@ else
 						draw_Rec_square(zenodes,zenodes[nodetodraw].desc[l],spgraph,fgroups,marge,0,x,seuil);		
 }
 /*--------------------------------------------------*/	
+
+void tagg(Node *zenodes,int nodetodraw,int spec)
+{
+	int i;
+	
+
+if (zenodes[nodetodraw].nbdesc==0)
+	zenodes[nodetodraw].specnumber= spec;
+else
+for (i=0;i<zenodes[nodetodraw].nbdesc;i++)
+		tagg(zenodes,zenodes[nodetodraw].desc[i],spec);
+}
+
+
 void tagg_rec(Node *zenodes,int nodetodraw,int *spec,double seuil)
 {
 	int i;
-
-if (zenodes[nodetodraw].nbdesc==0)
-	zenodes[nodetodraw].specnumber= *spec;
-else
+//printf ("tag_rec %d\n",zenodes[nodetodraw].nbdesc);
+	if(nothing_good_under(zenodes,nodetodraw,seuil))
+			tagg(zenodes,zenodes[nodetodraw].desc[0],*spec);
+	else	
 	for (i=0;i<zenodes[nodetodraw].nbdesc;i++)
 		{
-		
-		tagg_rec(zenodes,zenodes[nodetodraw].desc[i],spec,seuil);
-		if (zenodes[nodetodraw].pval<=seuil && zenodes[zenodes[nodetodraw].desc[i]].pval<=seuil) (*spec)++;
+		 
+			tagg_rec(zenodes,zenodes[nodetodraw].desc[i],spec,seuil);
+		(*spec)++;
+		//if (zenodes[nodetodraw].pval<=seuil) (*spec)++;
+		//if (zenodes[nodetodraw].pval<=seuil && zenodes[zenodes[nodetodraw].desc[i]].pval<=seuil) (*spec)++;
 		}	
 
 }
@@ -1683,12 +1769,37 @@ else
 		
 void tagg_allSpec(Results *scores,Node *zenodes,int partition,double seuil)
 {
-int i,nbspec=0;;
+int i,nbspec=0,j,othernode;;
 int nodetodraw;
-for (i=0;i<scores[partition].nbgroups;i++)
+//printf("%d nodes\n",scores[partition].nb_nodes);
+for (i=0;i<scores[partition].nb_nodes;i++)
 	{
+
 	nodetodraw=scores[partition].listNodes[i];
-	tagg_rec(zenodes,nodetodraw,&nbspec,seuil);
+	//printf("node %d: %d (%d==%d)\n",scores[partition].listNodes[i],nbspec,zenodes[nodetodraw].round,partition);
+	if(nothing_good_under(zenodes,nodetodraw,seuil) && partition !=zenodes[nodetodraw].round)
+		tagg(zenodes,nodetodraw,nbspec);
+	else
+		if (partition ==zenodes[nodetodraw].round)
+			{
+			//printf("--->nbdesc:%d\n",zenodes[nodetodraw].nbdesc);	
+			if (zenodes[nodetodraw].nbdesc!=0)	
+			for (j=0;j<zenodes[nodetodraw].nbdesc;j++)
+				{
+				othernode=zenodes[nodetodraw].desc[j];
+				//printf("\tn:%d nbfils:%d\n",othernode,zenodes[othernode].nbdesc);
+				if(zenodes[othernode].nbdesc==0)
+					tagg(zenodes,othernode,nbspec);
+				else	
+				tagg_rec(zenodes,othernode,&nbspec,seuil);
+				nbspec++;
+				}
+			else
+				zenodes[nodetodraw].specnumber= nbspec;
+			}
+
+		else	
+		tagg_rec(zenodes,nodetodraw,&nbspec,seuil);
 	nbspec++;
 	}
 }	
@@ -1703,10 +1814,31 @@ int i;
 			ecrit_esp_sous_node( zenodes,zenodes[nodetodraw].desc[i], f);
 }
 
+void find_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
+
+//char *write_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
+{
+int i;
+//printf("ps:%d nb:%d round:%d name:%s\n",sp,nb,round,name);
+
+for (i=0;i<nb;i++)
+{
+//	printf("%d %s\n",i,myspar[i].name);
+	if (strcmp(myspar[i].name,name)==0)
+		{
+
+		myspar[i].specie[round]=sp; 
+		break;
+		//return(myspar[i].name);
+		}
+	}
+//return("");
+}
 
 void ecrit_rec_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j)
 {
 int l;
+//fprintf(stderr,"%d %d-> under:%d",nodetodraw,zenodes[nodetodraw].nb_under,*j);
 if (zenodes[nodetodraw].nb_under==1 ||  nothing_good_under(zenodes,nodetodraw,seuil))
  	{	fprintf(f,"\nGroup[ %d ] n: %d ;id: ",(*j)+1,zenodes[nodetodraw].nb_under);ecrit_esp_sous_node(zenodes,nodetodraw,f);	}
 else
@@ -1715,11 +1847,15 @@ else
 						{ecrit_rec_esp_sous_node(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j);	(*j)++;	}
 }
 /*--------------------------------------------------*/	
-void ecrit_esp_cvs(Node *nodetodraw,int thenode,FILE *f,int sprec)
+/*void ecrit_esp_cvs(Node *nodetodraw,int thenode,FILE *f,int sprec)
 {
 int i;
 	if (nodetodraw[thenode].nbdesc==0)
-		fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);	
+	{
+		fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);
+			
+		//write_spart_name(nodetodraw[thenode].name,myspar,sprec+1,nbind,round);
+	}
 	else
 		for (i=0;i<nodetodraw[thenode].nbdesc;i++ )
 			ecrit_esp_cvs(nodetodraw,nodetodraw[thenode].desc[i], f,sprec);
@@ -1729,147 +1865,276 @@ void ecrit_rec_esp_cvs(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j)
 {
 int l;
 if (zenodes[nodetodraw].nb_under==1 ||  nothing_good_under(zenodes,nodetodraw,seuil))
- 	{	ecrit_esp_cvs(zenodes,nodetodraw,f,*j);	}
+ 	{	//ecrit_esp_cvs(zenodes,nodetodraw,f,*j,myspar,nbind);	
+ecrit_esp_cvs(zenodes,nodetodraw,f,*j);
+ 	}
 else
 	for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
 
 						{ecrit_rec_esp_cvs(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j);	(*j)++;	}
 }
 
-
-/*void ecrit_fichier_texte_presque( char *dirfiles,int nbres,Node *zenodes,Results *scores,FILE *fres,float seuil)
-{
-
-	
-	int i,j=0,k,l;
-FILE *f;
-FILE *f_l;
-char nom_fic[256];
-
- 
-j=0;
-
-for (k=0;k<nbres;k++)
-		{
-		sprintf(nom_fic,"%s/group_%d",dirfiles,k+1);	
-			f=fopen (nom_fic,"w");
-			sprintf(nom_fic,"%s/groupe_%d",dirfiles,k+1);	
-			f_l=fopen (nom_fic,"w");
-			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
-			fprintf(f,"Partition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
-			fprintf(f,"------------------------------------------------------------\n");
-			
-		if (scores[k].rank_general<=10 )
-			{
-				j=0;
-			for (i = 0; i <scores[k].nbgroups; i++)
-
-				{
-				int nodetodraw=scores[k].listNodes[i];
-				fprintf(f,"\n\n--->(pval %e <?%e)  node%d under=%d\n",zenodes[nodetodraw].pval,seuil,nodetodraw,zenodes[nodetodraw].nb_under);
-					
-				if ( (zenodes[nodetodraw].pval==1 || zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1 )	)
-					{
-						fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
-						ecrit_esp_sous_node(zenodes,nodetodraw,f);
-
-						//ecrit_esp_sous_node(zenodes,nodetodraw,f_l);
-						j++;
-					}
-						
-				else	
-				
-					for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
-						{
-							int aa=	zenodes[nodetodraw].desc[l];
-							fprintf(f,"\n*Group[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
-							ecrit_esp_sous_node(zenodes,aa,f,seuil);
-							//ecrit_rec_esp_sous_node(zenodes,aa,f_l);
-							j++;
-						}
-//
-					
-				}
-		
-	
-		
-
-			}	
-
-			fclose(f);
-			fclose(f_l);
-		}
-		
-}
 */
 
+void ecrit_esp_cvs(Node *nodetodraw,int thenode,FILE *f,int sprec,Spart *myspar,int nbind,int round)
+{
+int i;
+	if (nodetodraw[thenode].nbdesc==0)
+	{
+		fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);
+		//printf("%d , %d \n",thenode,sprec+1);
+		//printf("%s , %d \n",nodetodraw[thenode].name,sprec+1);
+		//printf("=====%s -->%d \n",nodetodraw[thenode].name,sprec+1);
+		find_spart_name(nodetodraw[thenode].name,myspar,sprec+1,nbind,round);
+		//printf("ok\n");
+	}
+	else
+		for (i=0;i<nodetodraw[thenode].nbdesc;i++ )
+			ecrit_esp_cvs(nodetodraw,nodetodraw[thenode].desc[i], f,sprec,myspar,nbind,round);
+}
+
+void ecrit_rec_esp_cvs(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Spart *myspar,int nbind,int round)
+{
+int l;
+if (zenodes[nodetodraw].nb_under==1 ||  nothing_good_under(zenodes,nodetodraw,seuil))
+ 	{	ecrit_esp_cvs(zenodes,nodetodraw,f,*j,myspar,nbind,round);	}
+else
+	for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
+
+						{ecrit_rec_esp_cvs(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,myspar,nbind,round);	(*j)++;	}
+}
 
 
+char *rewrite_spart(char *old_name)
+{
+char *new_name;
+int l=strlen(old_name),i;
+new_name=malloc(sizeof(char)*(strlen(old_name)+1));
 
-void ecrit_fichier_texte( char *dirfiles,int nbres,Node *zenodes,Results *scores,FILE *fres,float seuil)
+for (i=0;i<l;i++)
+	if (isalnum(old_name[i]) || (old_name[i]=='_'))
+		new_name[i]=old_name[i];
+	else
+		new_name[i]='_';
+
+new_name[i]='\0';
+
+return (new_name);
+}
+
+// part number is given recursively so reorder in a nice view order.
+void change_spart(Spart *myspar,int nbsample, int nb)
+{
+	
+	int i,j,class,c1,c2;
+	
+	for (i=0;i<nb;i++)
+	{
+		class=1;
+		for (j=0;j<nbsample-1;j++)
+		{
+		 c1=myspar[j].specie[i];
+		 c2=myspar[j+1].specie[i];
+		 if (c1== c2)
+		 	myspar[j].specie[i]=class;
+		 else
+		 {
+		 	myspar[j].specie[i]=class;class++;
+		 }
+		}
+		
+			myspar[j].specie[i]=class;
+	}
+
+}
+
+
+ //en fait il faut que jai un indice qui me permet decrire le bon spart .. ici cets nbsepcrec qui est OK masi ensuite myspart est rempli
+// ds ordre du meilleur rang et pas du +grd nbre de groupes au plus petit.. faire un tri?
+
+void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename,FILE *fres,Results *scores,int nbSamples,char *ladate,char *workdir,char *meth,int **order)
+{
+	int i,j,k;
+	FILE *f;
+	char *names=".spart";
+	
+	char lename[512];
+
+	
+	
+	
+		sprintf(lename,"%s%s/%s%s",workdir,ledir,dataFilename,names);
+		
+
+		//fprintf(stderr,"PARTFILE: %s******\n",lename);
+		f=fopen(lename,"w");
+		if (f==NULL) {fprintf(fres,"%s not opened",lename);fclose (fres);exit_properly(ledir);}
+		//printf("------>%s\n",lename);
+		fprintf(f,"begin spart;\n");
+		fprintf(f,"Project_name = %s;\n",dataFilename);
+		fprintf(f,"Date = %s;\n",ladate);
+		fprintf(f,"N_spartitions = %d : ",nbstepASAP);
+		for (i=0;i<nbstepASAP-1;i++)
+		{
+			fprintf(f,"%s_asap_%d / ",dataFilename,i+1);
+		}
+		fprintf(f,"%s_asap_%d;\n",dataFilename,i+1);
+		fprintf(f,"N_individuals = ");
+		for (i=0;i<nbstepASAP-1;i++)
+		{
+			fprintf(f,"%d / ",nbSamples);
+		}
+		fprintf(f," %d;\n",nbSamples);
+		
+		
+
+		fprintf(f,"N_subsets = ");
+		for (i=0;i<nbstepASAP-1;i++)
+
+		{
+			j=order[i][1];
+			fprintf(f,"%d / ",scores[j].nbspecRec);
+			
+		}
+		j=order[i][1];
+		fprintf(f,"%d;\n",scores[j].nbspecRec);
+		fprintf(f,"[Generated by ASAP with Distance %s ]\n",meth);
+		fprintf(f,"[Asap scores for the N_subset above are:]\n[");
+		for (i=0;i<nbstepASAP-1;i++)
+		{
+			j=order[i][1];
+			fprintf(f,"%2.1f / ",scores[j].score);
+		}	
+		j=order[i][1];
+		fprintf(f," %2.1f ]\n",scores[j].score);
+		fprintf(f,"[WARNING: The sample names below may have been changed to fit SPART specification (only alphanumeric characters and _ )]\n");
+
+		fprintf(f,"Individual_assignment = \n");
+		change_spart(myspar,nbSamples, nbstepASAP); //if not the partition number will be the program one and not nice to see
+
+		for (i=0;i<nbSamples-1;i++)
+		{
+
+			fprintf(f,"%s : ",rewrite_spart(myspar[i].name)); // alea
+			for (k=0;k<nbstepASAP-1;k++)
+			{
+				//int h=myspar[i].round;
+				j=order[k][1];
+				fprintf(f,"%d / ",myspar[i].specie[j]);
+			}
+	j=order[k][1];
+			fprintf(f,"%d\n",myspar[i].specie[j]);
+		}
+		fprintf(f,"%s : ",myspar[i].name); // alea
+		for (k=0;k<nbstepASAP-1;k++)
+		{
+			j=order[k][1];
+				fprintf(f,"%d / ",myspar[i].specie[j]);
+		}
+			j=order[k][1];
+			fprintf(f,"%d;\n",myspar[i].specie[j]);
+
+		fprintf(f,"end;\n");
+		
+		fclose(f);
+	
+
+
+} 
+/*Si tri avant alors spart pas ok sinon debut spart ok mais pas les parts et fichier groups non plus*/
+void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind)
+
+//void ecrit_fichier_texte( char *dirfiles,int nbres,Node *zenodes,Results *scores,FILE *fres,float seuil)
 {
 
 	
-	int i,j=0,k,l;
+int i,j=0,jj=0,k,l,nb_ok=0,rank;
 FILE *f;
 FILE *f_l;
-char nom_fic[256];
+//FILE *f_sp;
+char nom_fic[1024];
 
  
 j=0;
 
-for (k=0;k<nbres;k++)
-	
-	
-
+for (k=0;k<nbres_tot;k++)
 		{
-		sprintf(nom_fic,"%s/group_%d",dirfiles,k+1);	
+			/*int kk=scores[k].rank_general-1;
+			sprintf(nom_fic,"%s/group_%d",dirfiles,kk+1);	
 			f=fopen (nom_fic,"w");
-			sprintf(nom_fic,"%s/groupe_%d",dirfiles,k+1);	
+			sprintf(nom_fic,"%s/groupe_%d",dirfiles,kk+1);	
 			f_l=fopen (nom_fic,"w");
+			
+			
 			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
 			fprintf(f,"Partition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
 			fprintf(f,"------------------------------------------------------------\n");
-			
-		if (scores[k].rank_general<=10 )
+			//fprintf(stderr,"\n\nPartition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
+			fprintf(stderr,"------------------------------------------------------------\n");
+			*/
+	
+		if (scores[k].rank_general-1 <=nbres )
 			{
-				j=0;
+			rank=scores[k].rank_general-1;		
+			//fprintf(stderr,"-->%d\n",rank);	
+			j=0;jj=0;	
+			//fprintf(stderr,"--->%d %d\n",nb_ok,scores[k].rank_general-1);
+			sprintf(nom_fic,"%s/group_%d",dirfiles,rank+1);	
+			f=fopen (nom_fic,"w");
+			sprintf(nom_fic,"%s/groupe_%d",dirfiles,rank+1);	
+			f_l=fopen (nom_fic,"w");		
+			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
+			fprintf(f,"Partition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
+			fprintf(f,"------------------------------------------------------------\n");
+			//fprintf(stderr,"\n\nPartition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
+			//fprintf(stderr,"------------------------------------------------------------\n");				
+			//for (ppp=0;ppp<scores[k].nbgroups;ppp++)
+			//		fprintf(stderr,"%d ",scores[k].listNodes[ppp]);
+			//	fprintf(stderr,"\n");		
 			for (i = 0; i <scores[k].nbgroups; i++)
 
 				{
 				int nodetodraw=scores[k].listNodes[i];
-				//fprintf(f,"\n\n--->(pval %e <?%e) k:%d node%d round: %d under=%d dist:%f %f/%f\n",
-					//zenodes[nodetodraw].pval,seuil,k,nodetodraw,zenodes[nodetodraw].round,zenodes[nodetodraw].nb_under,zenodes[nodetodraw].dist,scores[k].d_jump,scores[k].d);
 				
+				//fprintf(stderr,"\n\n--->(pval %e <?%e) k:%d node%d round: %d under=%d dist:%f %f/%f\n",
+				//	zenodes[nodetodraw].pval,seuil,k,nodetodraw,zenodes[nodetodraw].round,zenodes[nodetodraw].nb_under,zenodes[nodetodraw].dist,scores[k].d_jump,scores[k].d);
+			
+				//fprintf(stderr,"score no %d\n",i);	
 
 				if (zenodes[nodetodraw].pval==1 || zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1  )
 
 					{
+					//fprintf(stderr,"score no %d\n",i);		
 					if (zenodes[nodetodraw].dist==scores[k].d) //on est pile poil a lendroit ou il faut casser
 					  {
+						//fprintf(stderr,"dist to cut\n");
 						if ( nothing_good_under(zenodes,nodetodraw,seuil)) //on splite juste les groupes
 							{
+						//	fprintf(stderr,"---->nothing good under node:%d (under:%d,desc:%d)\n",nodetodraw,zenodes[nodetodraw].nb_under,zenodes[nodetodraw].nbdesc);
+
 							for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
 								{ 
 
 									int aa=	zenodes[nodetodraw].desc[l];
 									fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
+									//fprintf(stderr,"\n!!!!Group[ %d ] pval :%f n: %d ;id: ",j+1,zenodes[aa].pval,zenodes[aa].nb_under);
 									ecrit_esp_sous_node(zenodes,aa,f);
-									ecrit_esp_cvs(zenodes,aa,f_l,j);
-									j++;
+								//	ecrit_esp_cvs(zenodes,aa,f_l,jj);
+									ecrit_esp_cvs(zenodes,aa,f_l,jj,myspar,nbind,rank);
+									j++;jj++;
 								}
 							}
 						else
-							{
-
+								{
+							//fprintf(stderr,"cest pas la quuon coupe\n");
 							for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
 								{
 								int aa=	zenodes[nodetodraw].desc[l];
-								//fprintf(f,"\n*Group[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
+								//fprintf(stderr,"\n****Group[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
 								ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j);
-						
-								ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&j);
-								j++;
+								//ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj);
+								ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
+								j++;jj++;
 								}
 
 							}
@@ -1877,12 +2142,15 @@ for (k=0;k<nbres;k++)
 
 						}//NOT PILEPOIL 
 					else{
+						//fprintf(stderr,"\nON ecrit le groupe entierGroup[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
 						fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
+
 						ecrit_esp_sous_node(zenodes,nodetodraw,f);
-						ecrit_esp_cvs(zenodes,nodetodraw,f_l,j);
-						
+						//fprintf(stderr,"cvs???\n");
+						ecrit_esp_cvs(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank);
+						//ecrit_esp_cvs(zenodes,nodetodraw,f_l,jj);
 						//ecrit_esp_sous_node(zenodes,nodetodraw,f_l);
-						j++;
+						j++;jj++;
 					}
 					
 					}// end of simple
@@ -1892,19 +2160,22 @@ for (k=0;k<nbres;k++)
 					for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
 						{
 							int aa=	zenodes[nodetodraw].desc[l];
-							//fprintf(f,"\n*Group[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
+							//fprintf(stderr,"\n*(node %d )ON RECRIT RECUSER Group[ %d ] n: %d ;id: ",aa,j+1,zenodes[aa].nb_under);
 							ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j);
-						
-							ecrit_rec_esp_cvs(zenodes,nodetodraw,f_l,seuil,&j);
-							j++;
+							ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
+						//	ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj);
+							j++;jj++;
 						}
-//
+
 					
 				} //end of i
-		
-			}//end of scorek.
-		fclose(f);
+			nb_ok++;
+			fclose(f);
 			fclose(f_l);
+
+			}//end of scorek.
+		//fclose(f);
+		//fclose(f_l);
 
 			}	
 
@@ -1912,8 +2183,28 @@ for (k=0;k<nbres;k++)
 		
 		
 }
+/*void ecrit_Spec(Results *scores,Node *zenodes,int kk,double seuil,int nresult)
+{
+	int k,i,j;
+//printf("round:%d\n",kk)	;
+for (k=0;k<nresult;k++)
+	
+		if (scores[k].rank_general<=10 )
+		{
+//			printf("%d (%d)____________\n",scores[k].rank_general,k);
+		//spgraph[zenodes[i].first_to_draw]=i
+			for (i = 0; i <scores[k].nbgroups; i++)
+//		 	for (i = 0; i <scores[k].nbspec; i++)
+				{
+				int nodetodraw=scores[k].listNodes[i];
+		
 
+//				printf("nbsp: %d \n",zenodes[nodetodraw].specnumber);
+				
 
+				}
+		}	
+}	*/				
 /*--------------------------------------------------*/
 /*Draw the groups the way Nico wants it...*/
 void draw_nico(Node *zenodes, FILE *fgroups, int nbspecies,Results *scores,int nresult,double seuil,int nbest,int nbnodes,int largeur_clado)
@@ -1956,7 +2247,7 @@ for (i = 0; i < nbspecies; i++)
 	{
 
 		sprintf(leg, "%s", zenodes[i].name);
-
+		//sprintf(myspar[i].name,rewrite_spart(zenodes[i].name));
 
 		fprintf(fgroups, "  <text x=\"%ld\" y=\"%ld\"  id=\"specie_%d\"  style=\"color:black;font-size :15;font-family = monospace;\" >%s </text>\n",
  						zenodes[i].xx , 
@@ -1971,6 +2262,7 @@ for (i = 0; i < nbspecies; i++)
 
 					//here node<todraw
 	}
+//	int flag=0,aaa;
 
 j=0;
 x=0;
@@ -1978,7 +2270,7 @@ fprintf (fgroups,"<text x=\"10\" y=\"10\" style=\"color:black;font-size :12;font
 fprintf (fgroups,"<text x=\"10\" y=\"25\" style=\"color:black;font-size :12;font-family = monospace;\">Score</text>\n");
 for (k=0;k<nresult;k++)
 	
-		if (scores[k].rank_general<=10 )
+		if (scores[k].rank_general<=nbest )
 		{
 			//int col=0;
 			x=	largeur_species+(50*j)+marge; 
@@ -1988,25 +2280,57 @@ for (k=0;k<nresult;k++)
 //			fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :12;font-family = monospace;\" >[%.1e] </text>\n",x ,SIZEOFTEXT+2,scores[k].proba);
 //		 	else
 //		 		fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :10;font-family = monospace;\" >*%2.1f*</text>\n",x ,SIZEOFTEXT,100*scores[k].other_parameter);
+			//printf("*************\n%d (%d) nbsp:%d-->\n",scores[k].rank_general,k,scores[k].nbspecRec);
 			for (i = 0; i <scores[k].nbgroups; i++)
 //		 	for (i = 0; i <scores[k].nbspec; i++)
 				{
 				int nodetodraw=scores[k].listNodes[i];
-
+				//printf("node:%d-->%f roubd:%d",nodetodraw,zenodes[nodetodraw].pval,zenodes[nodetodraw].round );
+				//if ((zenodes[nodetodraw].round !=k) &&(zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1 )	)
 				if ((zenodes[nodetodraw].round !=k) &&(zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1 )	)
-					draw_square(zenodes,nodetodraw,spgraph,fgroups,marge,i,x);	
+					{draw_square(zenodes,nodetodraw,spgraph,fgroups,marge,i,x);	}
 				else	//LEQUEL pour le parametre truc... en fait split de celui sur leuql on est... 
 					for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
-						draw_Rec_square(zenodes,zenodes[nodetodraw].desc[l],spgraph,fgroups,marge,i*l,x,seuil);	
+						{draw_Rec_square(zenodes,zenodes[nodetodraw].desc[l],spgraph,fgroups,marge,i*l,x,seuil);	}
 //
-				
+				//printf("\n");				
 				}
-		
+
+	
+		//dans zenode.lasttodraw jai le numero
+		/*
 			tagg_allSpec(scores,zenodes,k,seuil);//tagg all species with a group nbr corresponding to res
 	
+		
+				printf("************\n");
+				for (aaa=0;aaa<nbspecies;aaa++)
+					printf("%.20s %d\n",zenodes[aaa].name,zenodes[aaa].specnumber);
+				printf("************\n");
+		
+			flag=1;
+*/
 			j++;
 
 		}	
+
+/*for (k=0;k<nresult;k++)
+	
+		if (scores[k].rank_general<=nbest )
+		{
+			printf("%d (%d)____________\n",scores[k].rank_general,k);
+		//spgraph[zenodes[i].first_to_draw]=i
+			for (i = 0; i <scores[k].nbgroups; i++)
+//		 	for (i = 0; i <scores[k].nbspec; i++)
+				{
+				int nodetodraw=scores[k].listNodes[i];
+				int sppp= zenodes[nodetodraw].specnumber;
+
+				printf("spgr: %d nbsp: %d node2draw:%d\n",
+					spgraph[  zenodes[nodetodraw].first_to_draw ],sppp,zenodes[nodetodraw].first_to_draw);
+
+				}
+printf("$$$$$$$$$*****************\n");
+		}	*/
 
 	int arbreagauche=x+marge+50;
 
@@ -2058,7 +2382,7 @@ free(spgraph);
 
 /*--------------------------------------------------*/
 /*Draw the groups the way Nico wants it...*/
-void draw_nico_old(Node *zenodes, FILE *fgroups, int nbspecies,Results *scores,int nresult,double seuil,int nbest,int nbnodes,int largeur_clado)
+/*void draw_nico_old(Node *zenodes, FILE *fgroups, int nbspecies,Results *scores,int nresult,double seuil,int nbest,int nbnodes,int largeur_clado)
 {
 	int i, k, j, l,maxLengthName=0,largeur_nico,hauteur;
 	long x;
@@ -2142,9 +2466,7 @@ for (k=0;k<nresult;k++)
 //
 				
 				}
-		
-			tagg_allSpec(scores,zenodes,k,seuil);//tagg all species with a group nbr corresponding to res
-	
+			
 			j++;
 
 		}	
@@ -2194,6 +2516,7 @@ fprintf(fgroups, "</svg>\n");
 	
 free(spgraph);
 }
+*/
 /*--------------------------------------------------*/
 /*No use here but keep in case we want a tree some day
 void print_TreeAsap(char *treestring, int nbesp, FILE *svgout, char *path)
