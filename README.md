@@ -2,7 +2,7 @@
 
 Assemble species by automatic partitioning.
 
-This is a Python wrapper for ABGD: <https://bioinfo.mnhn.fr/abi/public/asap/>
+This is a Python wrapper for ASAP: <https://bioinfo.mnhn.fr/abi/public/asap/>
 
 *(you will need a C compiler when building from source)*
 
