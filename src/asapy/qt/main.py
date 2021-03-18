@@ -53,6 +53,10 @@ class ResultView(QtWidgets.QListWidget):
         self.clear()
         path = pathlib.Path(folder)
 
+        # result files
+        for file in sorted(list(path.glob('*.all'))):
+            ResultItem(str(path / file), self)
+
         # graph files
         for file in sorted(list(path.glob('*.svg'))):
             ResultItem(str(path / file), self)
@@ -220,6 +224,9 @@ class Main(widgets.ToolDialog):
                 },
             }
 
+        ResultItem.Icons['.all'] = \
+            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
+                colormap=self.colormap_icon))
         ResultItem.Icons['.txt'] = \
             QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
                 colormap=self.colormap_icon))
@@ -577,6 +584,7 @@ class Main(widgets.ToolDialog):
             'Tree files (*.tree)': fromFilter('*.tree'),
             'Vector Graphics (*.svg)': fromFilter('*.svg'),
             'Log files (*.log)': fromFilter('*.log'),
+            'Result files (*.all)': fromFilter('*.all'),
             }
 
         # Widget-based dialog, filters decide what files are saved

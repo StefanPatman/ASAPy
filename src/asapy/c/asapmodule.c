@@ -120,6 +120,7 @@ asap_main(PyObject *self, PyObject *args) {
 	fpos_t stdout_pos;
 	fpos_t stderr_pos;
 	FILE *flog = NULL;
+	FILE *fres = NULL;
 
 
 	/* a bunch of beautiful structures usefull for the code */
@@ -155,7 +156,8 @@ asap_main(PyObject *self, PyObject *args) {
 			 *dirfiles,
 	     *dirfiles_default = ".",
 			 *file_data,
-	     *file_log,
+			 *file_log,
+	     *file_res,
 //	      *nametree,
 	     *fname,
 	     *namegroups,
@@ -260,7 +262,7 @@ asap_main(PyObject *self, PyObject *args) {
 		}
 		int ddup = dup2(fileno(stderr), fileno(stdout));
 		if (ddup < 0) {
-			PyErr_SetString(PyExc_SystemError, "abgd_main: Failed to redirect stdout, aborting.");
+			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to redirect stdout, aborting.");
 			return NULL;
 		}
 		// printf("AFTER REDIRECT: \n");
@@ -281,40 +283,41 @@ asap_main(PyObject *self, PyObject *args) {
 	fprintf(stderr, "*/\n");
 
 	// Print these here so they are redirected if needed
-	printf("> file = %s\n", file_data);
-	printf("> dirfiles = %s\n", dirfiles);
-	printf("> withlogfile = %i\n", withlogfile);
+	printf("> Passing parameters to ASAP\n", file_data);
+	printf("- file = %s\n", file_data);
+	printf("- dirfiles = %s\n", dirfiles);
+	printf("- withlogfile = %i\n", withlogfile);
 
 	if (parseItem(dict, "time", 's', &thedate)) return NULL;
 	if (!thedate) thedate = thedate_default;
-	printf("> thedate = %s\n", thedate);
+	printf("- thedate = %s\n", thedate);
 
 	if (parseItem(dict, "method", 'i', &imethode)) return NULL;
-	printf("> imethode = %i\n", imethode);
+	printf("- imethode = %i\n", imethode);
 
 	if (parseItem(dict, "seed", 'i', &seed_asap)) return NULL;
-	printf("> seed_asap = %i\n", seed_asap);
+	printf("- seed_asap = %i\n", seed_asap);
 
 	if (parseItem(dict, "sequence_length", 'i', &(asap_param.lenSeq))) return NULL;
-	printf("> asap_param.lenSeq = %i\n", asap_param.lenSeq);
+	printf("- asap_param.lenSeq = %i\n", asap_param.lenSeq);
 
 	if (parseItem(dict, "replicates", 'i', &(asap_param.replicates))) return NULL;
-	printf("> asap_param.replicates = %i\n", asap_param.replicates);
+	printf("- asap_param.replicates = %i\n", asap_param.replicates);
 
 	if (parseItem(dict, "seuil_pvalue", 'f', &(asap_param.seuil_pvalue))) return NULL;
-	printf("> seuil_pvalue = %f\n", asap_param.seuil_pvalue);
+	printf("- seuil_pvalue = %f\n", asap_param.seuil_pvalue);
 
 	if (parseItem(dict, "pond_pente", 'f', &(asap_param.pond_pente))) return NULL;
-	printf("> pond_pente = %f\n", asap_param.pond_pente);
+	printf("- pond_pente = %f\n", asap_param.pond_pente);
 
 	if (parseItem(dict, "rate", 'f', &ts_tv)) return NULL;
-	printf("> ts_tv = %f\n", ts_tv);
+	printf("- ts_tv = %f\n", ts_tv);
 
 	if (parseItem(dict, "all", 'b', &withallfiles)) return NULL;
-	printf("> withallfiles = %i\n", withallfiles);
+	printf("- withallfiles = %i\n", withallfiles);
 
 	if (parseItem(dict, "mega", 'b', &fmeg)) return NULL;
-	printf("> fmeg = %i\n", fmeg);
+	printf("- fmeg = %i\n", fmeg);
 
 
 	printf("\n> Begin ASAP core:\n\n");
@@ -339,18 +342,18 @@ asap_main(PyObject *self, PyObject *args) {
 	/*
 
 	*/
-	fout = (char * )malloc( (size_t) sizeof(char) * (strlen(simple_name)+ strlen(dirfiles) + 5));
+	fout = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 8));
 	if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
 
-	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + strlen (simple_name) +20)));
-	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);
-	sprintf(fout, "%s%s.all", dirfiles, simple_name);
+	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + 20)));
+	sprintf(namegroups,"%sgroups.svg",dirfiles);
+	sprintf(fout, "%sasap.all", dirfiles);
 
 	asap_param.f_out = fopen(fout, "w+");
 	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
 
-	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
-	sprintf(fname, "%s%s.svg", dirfiles, simple_name);
+	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +11) );
+	sprintf(fname, "%sspecies.svg", dirfiles);
 
 	svgout = fopen(fname, "w");
 	if (svgout == NULL)fprintf(stderr, "cannot open the graphic output file %s, bye\n", fname), exit(1);
@@ -481,8 +484,14 @@ asap_main(PyObject *self, PyObject *args) {
 		scores[i].rank_general=i+1;
 
 
-	fprintf(stderr, "\n> 10 Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
-	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
+
+	file_res = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 10));
+	sprintf(file_res,"%sscores.log",dirfiles);
+	fres = fopen(file_res,"w");
+
+	fprintf(stderr, "> writing scores file\n",asap_param.lenSeq);
+	fprintf(fres, "Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
+	fprintf(fres, "S distance  #species   #spec w/rec  p-value pente score\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
 
@@ -491,7 +500,7 @@ asap_main(PyObject *self, PyObject *args) {
 					if (scores[i].d_jump>=minAsapDist && scores[i].d_jump<=maxAsapDist)
 						toStar='*';
 
-			 fprintf(stderr, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
+			 fprintf(fres, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
 			    	toStar,
 			 		scores[i].d_jump,
 			 		scores[i].nbspec,
@@ -501,13 +510,14 @@ asap_main(PyObject *self, PyObject *args) {
 			       	 scores[i].other_parameter *100,
 			       	 scores[i].score);
 			}
+	fclose(fres);
 
-			/*if (withallfiles)
-				//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
-			ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);*/
-			printf("creating histo in %s\n",dirfiles);
-			//createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
-			createSVGhisto(dirfiles,mat,20,scores, nbresults,"");
+	/*if (withallfiles)
+		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
+	ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);*/
+	printf("creating histo in %s\n",dirfiles);
+	//createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
+	createSVGhisto(dirfiles,mat,20,scores, nbresults,"");
 
 	/*
 		That
@@ -580,17 +590,19 @@ asap_main(PyObject *self, PyObject *args) {
 		free(o_sp);
 	}
 
+	fclose(asap_param.f_out);
+
 	fprintf(stderr, "> results were write\n");
 
 	t5 = time(NULL);
 
 	resetcomp(&comp, mat.n);
-	fprintf(stderr, "  partition results are logged in: \n");
-	fprintf(stderr, "\tFull results: %s\n",fout);
-	fprintf(stderr, "\tThe csv file of rank x: %sgroupe_x\n",dirfiles);
-	fprintf(stderr, "\tThe result file of rank x: %sgroup_x\n",dirfiles);
-	fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
-	fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
+	// fprintf(stderr, "  partition results are logged in: \n");
+	// fprintf(stderr, "\tFull results: %s\n",fout);
+	// fprintf(stderr, "\tThe csv file of rank x: %sgroupe_x\n",dirfiles);
+	// fprintf(stderr, "\tThe result file of rank x: %sgroup_x\n",dirfiles);
+	// fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
+	// fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
 
 	free (fout);
 //	free(fileNex);

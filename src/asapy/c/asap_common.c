@@ -1016,7 +1016,7 @@ int largeur=360;
 	char  *colors[3]={"#FFFFFF","#ffb83b","#00a5eb"};
 	int nbcomp=((dist_mat.n * (dist_mat.n -1)))/2.0;
 
-		sprintf(filename,"%s%s/myHisto.svg",workdir,ledir); // all squares are pointing to a different file
+		sprintf(filename,"%s%s/histogram.svg",workdir,ledir); // all squares are pointing to a different file
 
 
 	//sprintf(filename,"%s.disthist.svg",file);
@@ -1140,7 +1140,7 @@ for (j=0,i = nbresults - 1; i >= 0; i--)
 	fclose(svgout);
 
 	/**********************************AUTRE HISTO*/
-	sprintf(filename,"%s%s/myHistoCum.svg",workdir,ledir); // all squares are pointing to a different file
+	sprintf(filename,"%s%s/ranks.svg",workdir,ledir); // all squares are pointing to a different file
 	svgout=fopen(filename,"w");
 	fprintf(svgout,"<svg xmlns=\"http://www.w3.org/2000/svg\"  ");
 	fprintf(svgout,"width=\"%d\" height=\"%d\" >\n",largeur+sizelegend, hauteur+sizelegend+marge);
@@ -1956,14 +1956,13 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 {
 	int i,j,k;
 	FILE *f;
-	char *names=".spart";
 
 	char lename[512];
 
 
 
 
-		sprintf(lename,"%s%s/%s%s",workdir,ledir,dataFilename,names);
+		sprintf(lename,"%s%s/asap.spart",workdir,ledir);
 
 
 		//fprintf(stderr,"PARTFILE: %s******\n",lename);
