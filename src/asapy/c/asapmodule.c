@@ -119,6 +119,8 @@ asap_main(PyObject *self, PyObject *args) {
 	int stderr_bak = -1;
 	fpos_t stdout_pos;
 	fpos_t stderr_pos;
+	FILE *flog = NULL;
+
 
 	/* a bunch of beautiful structures usefull for the code */
 
@@ -152,7 +154,8 @@ asap_main(PyObject *self, PyObject *args) {
 	char *fout,
 			 *dirfiles,
 	     *dirfiles_default = ".",
-	     *file_data,
+			 *file_data,
+	     *file_log,
 //	      *nametree,
 	     *fname,
 	     *namegroups,
@@ -238,33 +241,34 @@ asap_main(PyObject *self, PyObject *args) {
 	if (parseItem(dict, "logfile", 'b', &withlogfile)) return NULL;
 
 	if (withlogfile) {
-		sprintf(file_data,"%s/asap.log",dirfiles);
-		printf("> Redirecting stdout/stderr to file: %s\n", file_data);
-		printf("BEFORE REDIRECT: \n");
-		printf("stdout %d\n", stdout);
-		printf("stderr %d\n", stderr);
+		file_log = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 8));
+		sprintf(file_log,"%sasap.log",dirfiles);
+		printf("> Redirecting stdout/stderr to file: %s\n", file_log);
+		// printf("BEFORE REDIRECT: \n");
+		// printf("stdout %p\n", stdout);
+		// printf("stderr %p\n", stderr);
 		fflush(stdout);
 		fflush(stderr);
 		fgetpos(stdout, &stdout_pos);
 		fgetpos(stderr, &stderr_pos);
 		stdout_bak = dup(fileno(stdout));
 		stderr_bak = dup(fileno(stderr));
-		FILE *dout = freopen(file_data,"w",stdout);
-		#ifdef _WIN32
-		// Open stderr or else dup2 will fail for windowed app
-		FILE *derr = freopen("NUL:","w",stderr);
-		#endif
-		int ddup = dup2(fileno(stdout), fileno(stderr));
-		printf("AFTER REDIRECT: \n");
-		printf("stdout %d\n", stdout);
-		printf("stderr %d\n", stderr);
-		printf("ddup %d\n", ddup);
-		printf("stdout_bak %p\n", stdout_bak);
-		printf("stderr_bak %p\n", stderr_bak);
-		if ((dout == NULL) || (ddup < 0)) {
-			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to redirect output, aborting.");
+		flog = freopen(file_log,"w",stderr);
+		if (flog == NULL) {
+			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to open log file, aborting.");
 			return NULL;
 		}
+		int ddup = dup2(fileno(stderr), fileno(stdout));
+		if (ddup < 0) {
+			PyErr_SetString(PyExc_SystemError, "abgd_main: Failed to redirect stdout, aborting.");
+			return NULL;
+		}
+		// printf("AFTER REDIRECT: \n");
+		// printf("stdout %p\n", stdout);
+		// printf("stderr %p\n", stderr);
+		// printf("ddup %d\n", ddup);
+		// printf("stdout_bak %p\n", stdout_bak);
+		// printf("stderr_bak %p\n", stderr_bak);
 	}
 
 	/*
@@ -609,6 +613,27 @@ asap_main(PyObject *self, PyObject *args) {
 	fprintf(stderr,"  %2ldm %2lds total\n", (t5 - t1) / 60, (t5 - t1) % 60);
 
 //	fclose(	f_out);
+
+	if ((withlogfile) && !(stdout_bak < 0) && !(stderr_bak < 0)) {
+		fflush(stdout);
+		fflush(stderr);
+		int dout = dup2(stdout_bak, fileno(stdout));
+		int derr = dup2(stderr_bak, fileno(stderr));
+		close(stdout_bak);
+		close(stderr_bak);
+		clearerr(stdout);
+		clearerr(stderr);
+		fsetpos(stdout, &stdout_pos);
+		fsetpos(stderr, &stderr_pos);
+		fclose(flog);
+		if ((dout < 0) || (derr < 0)) {
+			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to restore output.");
+			return NULL;
+		}
+		printf("< Restored stdout/stderr\n");
+		fflush(stdout);
+		fflush(stderr);
+	}
 
 	Py_INCREF(Py_None);
 	return Py_None;
