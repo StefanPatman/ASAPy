@@ -14,7 +14,7 @@ __pycache__/
 .cache
 
 # qt auto-compiled resources
-src/abgdpy/qt/resources.py
+src/*/qt/resources.py
 
 # accidental test files
 test.abgd.svg
