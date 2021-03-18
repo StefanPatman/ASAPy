@@ -591,6 +591,7 @@ asap_main(PyObject *self, PyObject *args) {
 	}
 
 	fclose(asap_param.f_out);
+	fclose(fgroups);
 
 	fprintf(stderr, "> results were write\n");
 

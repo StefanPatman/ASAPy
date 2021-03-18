@@ -209,18 +209,19 @@ class Main(widgets.ToolDialog):
             '#ffa500': color['pink'],
             }
         self.colormap_graph =  {
-            'asap': {
+            'groups': {
                 'black':   color['black'],
-                '#D82424': color['red'],
-                '#EBE448': color['gray'],
                 },
-            'disthist': {
+            'histogram': {
                 'black':   color['black'],
-                '#EBE448': color['beige'],
+                '#ffb83b': color['beige'],
                 },
-            'rank': {
+            'ranks': {
                 'black':   color['black'],
-                '#D82424': color['red'],
+                '#00a5eb': color['red'],
+                },
+            'species': {
+                'black':   color['black'],
                 },
             }
 

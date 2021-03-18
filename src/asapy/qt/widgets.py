@@ -499,6 +499,7 @@ class ToolDialog(QtWidgets.QDialog):
 
     def fail(self, exception):
         """Show exception dialog"""
+        raise exception
         msgBox = QtWidgets.QMessageBox(self)
         msgBox.setWindowTitle(self.windowTitle())
         msgBox.setIcon(QtWidgets.QMessageBox.Critical)
