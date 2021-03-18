@@ -10,7 +10,7 @@ params = {
             },
             "all": {
                 "label":    "Generate all files",
-                "doc":      "Generate all partition and tree files.",
+                "doc":      "Generate all partition files.",
                 "type":     "bool",
                 "default":  True
             },

@@ -247,11 +247,11 @@ class Main(widgets.ToolDialog):
         self.header.logoProject = QtGui.QPixmap(':/resources/itaxotools-micrologo.png')
         self.header.description = (
             'Primary species delimitation' + '\n'
-            'using .........'
+            'using automatic partitioning'
             )
         self.header.citation = (
-            'ASAP by ......................' + '\n'
-            'Python wrapper by S. Patmanidis'
+            'ASAP by S. Brouillet, G. Achaz, N. Puillandre' + '\n'
+            'BIONJ by O. Gascuel, GUI by S. Patmanidis'
         )
 
         self.line = widgets.Subheader()
