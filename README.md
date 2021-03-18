@@ -14,18 +14,18 @@ Install using pip:
 $ pip install .
 ```
 
-<!-- Run the GUI:
+Run the GUI:
 
 ```
 $ asapy-qt
-``` -->
+```
 
 Simple command line tool:
 
 ```
 $ asapy tests/test.fas
 ```
-<!--
+
 ## Launch without installing
 
 Before the first time you use the program, you must install any required modules, build the ASAP core and auto-compile the Qt resource files:
@@ -72,7 +72,7 @@ $ python -i
 
 Initialize an analysis on your file:
 ```
->>> a = abgd.BarcodeAnalysis('tests/test.fas')
+>>> a = asapy.PartitionAnalysis('tests/test.fas')
 ```
 
 Browse and change parameters:
@@ -84,7 +84,7 @@ Browse and change parameters:
 
 Run the analysis:
 ```
->>> abgd.launch(a)
+>>> a.launch()
 ```
 
 You can find the results inside the folder `a.results`.
@@ -92,7 +92,7 @@ Save them in a new directory:
 ```
 >>> print(a.results)
 >>> a.fetch('./my_results')
-``` -->
+```
 
 ## Acknowledgements
 
