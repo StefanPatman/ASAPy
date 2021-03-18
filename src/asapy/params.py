@@ -12,7 +12,7 @@ params = {
                 "label":    "Generate all files",
                 "doc":      "Generate all partition and tree files.",
                 "type":     "bool",
-                "default":  False
+                "default":  True
             },
             "sequence_length": {
                 "label":    "Sequence length",

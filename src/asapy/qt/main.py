@@ -61,8 +61,12 @@ class ResultView(QtWidgets.QListWidget):
         for file in sorted(list(path.glob('*.spart'))):
             ResultItem(str(path / file), self)
 
-        # partition files
+        # partition files (lists)
         for file in sorted(list(path.glob('*.txt'))):
+            ResultItem(str(path / file), self)
+
+        # partition files (csv)
+        for file in sorted(list(path.glob('*.csv'))):
             ResultItem(str(path / file), self)
 
         # tree files
@@ -217,6 +221,9 @@ class Main(widgets.ToolDialog):
             }
 
         ResultItem.Icons['.txt'] = \
+            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
+                colormap=self.colormap_icon))
+        ResultItem.Icons['.csv'] = \
             QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
                 colormap=self.colormap_icon))
         ResultItem.Icons['.svg'] = \
