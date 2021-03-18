@@ -8,41 +8,41 @@ params = {
                 "type":     "bool",
                 "default":  False
             },
+            "all": {
+                "label":    "Generate all files",
+                "doc":      "Generate all partition and tree files.",
+                "type":     "bool",
+                "default":  False
+            },
             "sequence_length": {
                 "label":    "Sequence length",
                 "doc":      "Original length of the sequence.",
                 "type":     "int",
                 "default":  600
             },
-            "spart": {
-                "label":    "Generate Spart (X)",
-                "doc":      "Generate Spart files.",
-                "type":     "bool",
-                "default":  True
-            },
-            "all": {
-                "label":    "Generate all files",
-                "doc":      "Generate all partition and tree files.",
-                "type":     "bool",
-                "default":  False
-            }
         }
     },
     "advanced": {
         "label": "Advanced",
         "doc": "Advanced",
         "fields": {
-            "keep": {
-                "label":    "Keep (X)",
-                "doc":      "Number of best results to be reported.",
-                "type":     "int",
-                "default":  10
-            },
             "replicates": {
                 "label":    "Replicates",
                 "doc":      "Number of replicates for statistical tests.",
                 "type":     "int",
                 "default":  1000
+            },
+            "seuil_pvalue": {
+                "label":    "Pvalue Threshold",
+                "doc":      "Limit for results to be reported.",
+                "type":     "float",
+                "default":  0.05
+            },
+            "pond_pente": {
+                "label":    "Pond Pente",
+                "doc":      "Limit for results to be reported.",
+                "type":     "float",
+                "default":  0.1
             },
             "seed": {
                 "label":    "Seed",
