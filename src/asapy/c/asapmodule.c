@@ -255,6 +255,11 @@ asap_main(PyObject *self, PyObject *args) {
 		fgetpos(stderr, &stderr_pos);
 		stdout_bak = dup(fileno(stdout));
 		stderr_bak = dup(fileno(stderr));
+		#ifdef _WIN32
+		// Open stderr or else the rest will fail for windowed app
+		FILE *dout = freopen("NUL:","w",stdout);
+		FILE *derr = freopen("NUL:","w",stderr);
+		#endif
 		flog = freopen(file_log,"w",stderr);
 		if (flog == NULL) {
 			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to open log file, aborting.");
