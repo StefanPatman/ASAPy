@@ -1,9 +1,4 @@
-"""A setuptools based setup module.
-
-See:
-https://packaging.python.org/guides/distributing-packages-using-setuptools/
-https://github.com/pypa/sampleproject
-"""
+"""A setuptools based setup module."""
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages, Extension, Command
@@ -60,7 +55,7 @@ setup(
     name='asapy',
 
     # Versions should comply with PEP 440
-    version='0.0.1',
+    version='0.0.2',
 
     # This is a one-line description or tagline of what your project does
     description='A Python wrapper for ASAP',  # Optional
@@ -128,6 +123,15 @@ setup(
     #     'Programming Language :: Python :: 3.9',
     #     'Programming Language :: Python :: 3 :: Only',
     # ],
+    classifiers = [
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3 :: Only',
+    ]
 
     # This field adds keywords for your project which will appear on the
     # project page. What does your project relate to?
