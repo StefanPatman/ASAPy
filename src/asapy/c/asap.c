@@ -53,8 +53,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
-
+#ifdef _WIN32
+#define strcasestr strstr
+#endif
 
 
 #define ASAP_CL
@@ -274,6 +275,15 @@ void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat)
 	while (1)
 		 {
 			fscanf(f_in,"%[^\n]\n",ligne);
+
+#ifdef _WIN32
+// Naive solution to replace strcasestr: capitalize everything
+			char *s = ligne;
+			while (*s) {
+				*s = toupper((unsigned char) *s);
+				s++;
+			}
+#endif
 
 			if (feof(f_in)) printf("pb reading file...\n"),exit(1);
 
