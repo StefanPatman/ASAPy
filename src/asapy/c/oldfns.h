@@ -43,6 +43,4 @@ double compute_logL_given_t_R( long nsites, long n_tsv, long n_tsi, double t, do
 double compute_k80( long nsites, long n_tsv, long n_tsi );
 double find_ML_t_given_R( double R, long nsites, long n_tsv, long n_tsi );
 
-
-
 #endif

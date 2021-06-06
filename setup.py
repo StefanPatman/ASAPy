@@ -34,17 +34,21 @@ class build_py(_build_py):
         _build_py.run(self)
 
 asapmodule = Extension('asapy.asapc',
-                    include_dirs = ['src/asapy/c'],
-                    sources = [
-                        'src/asapy/c/asapmodule.c',
-                        'src/asapy/c/asap_common.c',
-                        'src/asapy/c/asap_core.c',
-                        'src/asapy/c/draw.c',
-                        'src/asapy/c/gdtosvg.c',
-                        'src/asapy/c/oldfns.c',
-                        ],
-                    extra_compile_args = ["-w"],
-                        )
+        include_dirs = ['src/asapy/c'],
+        define_macros = [
+            ('ismodule', '1')
+            ],
+        sources = [
+            'src/asapy/c/asapmodule.c',
+            'src/asapy/c/asap_common.c',
+            'src/asapy/c/asap_core.c',
+            'src/asapy/c/asap.c',
+            'src/asapy/c/draw.c',
+            'src/asapy/c/gdtosvg.c',
+            'src/asapy/c/oldfns.c',
+            ],
+        extra_compile_args = ["-w"],
+    )
 
 # Get the long description from the README file
 long_description = (here / 'README.md').read_text(encoding='utf-8')

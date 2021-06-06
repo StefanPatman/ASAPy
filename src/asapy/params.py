@@ -2,17 +2,21 @@ params = {
     "general": {
         "label": "General",
         "fields": {
-            "mega": {
-                "label":    "MEGA CVS",
-                "doc":      "If True, the distance Matrix is supposed to be MEGA CVS\n(other formats are guessed).",
-                "type":     "bool",
-                "default":  False
-            },
             "all": {
                 "label":    "Generate all files",
                 "doc":      "Generate all partition files.",
                 "type":     "bool",
                 "default":  True
+            },
+            "mega": {
+                "label":    "MEGA Format",
+                "doc":      "Set if the distance Matrix is supposed to be MEGA\n(other formats are guessed).",
+                "type":     "list",
+                "default":  0,
+                "data": {
+                "items":  [0,1,2],
+                "labels": ["Other","MEGA CVS","MEGA 5"]
+                }
             },
             "sequence_length": {
                 "label":    "Sequence length",
@@ -36,7 +40,7 @@ params = {
                 "label":    "Pvalue Threshold",
                 "doc":      "Limit for results to be reported.",
                 "type":     "float",
-                "default":  0.05
+                "default":  0.001
             },
             "pond_pente": {
                 "label":    "Pond Pente",

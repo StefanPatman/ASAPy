@@ -1,0 +1,107 @@
+The following changes were made to the original C code (from 2021-04-15):
+
+- Added Python module as `asapmodule.c`: adds a modified version of asap.c/main()
+
+- Other source files were also slightly modified:
+
+diff -w ASAP/asap.c ASAPy/src/asapy/c/asap.c
+46a47
+> #ifndef _WIN32
+48d48
+<
+49a50
+> #endif
+921,922d921
+<
+<
+diff -w ASAP/asap_common.c ASAPy/src/asapy/c/asap_common.c
+1019c1019
+< 		sprintf(filename,"%s%s/myHisto.svg",workdir,ledir); // all squares are pointing to a different file
+---
+> 	sprintf(filename,"%s%s/histogram.svg",workdir,ledir); // all squares are pointing to a different file
+1143c1143
+< 	sprintf(filename,"%s%s/myHistoCum.svg",workdir,ledir); // all squares are pointing to a different file
+---
+> 	sprintf(filename,"%s%s/ranks.svg",workdir,ledir); // all squares are pointing to a different file
+1939,1943c1939
+<
+<
+<
+< 		sprintf(lename,"%s%s/%s%s",workdir,ledir,dataFilename,names);
+<
+---
+> 		sprintf(lename,"%s%s/asap.spart",workdir,ledir);
+2061c2057
+< 			sprintf(nom_fic,"%s/group_%d",dirfiles,rank+1);
+---
+> 			sprintf(nom_fic,"%s/group_%d.txt",dirfiles,rank+1);
+2063c2059
+< 			sprintf(nom_fic,"%s/groupe_%d",dirfiles,rank+1);
+---
+> 			sprintf(nom_fic,"%s/group_%d.csv",dirfiles,rank+1);
+2303,2304d2298
+<
+<
+diff -w ASAP/asap.h ASAPy/src/asapy/c/asap.h
+261a262,264
+> void readMatrixMegaCVS(FILE *f_in,struct DistanceMatrix *my_mat);
+> void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat);
+>
+Only in ASAPy/src/asapy/c: asapmodule.c
+Only in ASAPy/src/asapy/c: CHANGES
+diff -w ASAP/draw.c ASAPy/src/asapy/c/draw.c
+169d168
+<
+diff -w ASAP/gdtosvg.c ASAPy/src/asapy/c/gdtosvg.c
+107d106
+<
+\ No newline at end of file
+diff -w ASAP/Makefile ASAPy/src/asapy/c/Makefile
+15d14
+<
+diff -w ASAP/oldfns.c ASAPy/src/asapy/c/oldfns.c
+38,39d37
+< #include <unistd.h>
+< #include <strings.h>
+41a40,42
+> #ifndef _WIN32
+> #include <unistd.h>
+> #include <strings.h>
+42a44
+> #endif
+48c50,52
+<
+---
+> #ifdef _WIN32
+> #define strcasestr strstr
+> #endif
+652a657,658
+> #ifndef _WIN32
+>
+682a689
+> #endif
+1389a1397,1406
+>
+> 	#ifdef _WIN32
+> 		// Naive solution to replace strcasestr: capitalize everything
+> 		char *s = data;
+> 		while (*s) {
+> 			*s = toupper((unsigned char) *s);
+> 			s++;
+> 		}
+> 	#endif
+>
+1754,1760d1770
+<
+<
+<
+<
+<
+<
+<
+1773d1782
+<
+diff -w ASAP/oldfns.h ASAPy/src/asapy/c/oldfns.h
+46,47d45
+<
+<

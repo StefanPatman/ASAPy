@@ -219,7 +219,7 @@ asap_main(PyObject *self, PyObject *args) {
 		asap_param.pond_pente=0.1;
 		asap_param.pond_score=0.5;
 		asap_param.replicates=1000;
-		asap_param.seuil_pvalue=0.05;
+		asap_param.seuil_pvalue=0.001;
 		//asap_param.ledir="";
 		asap_param.fres=stderr;
 		asap_param.lenSeq=600;
@@ -336,7 +336,7 @@ asap_main(PyObject *self, PyObject *args) {
 	if (parseItem(dict, "all", 'b', &withallfiles)) return NULL;
 	printf("- withallfiles = %i\n", withallfiles);
 
-	if (parseItem(dict, "mega", 'b', &fmeg)) return NULL;
+	if (parseItem(dict, "mega", 'i', &fmeg)) return NULL;
 	printf("- fmeg = %i\n", fmeg);
 
 
@@ -394,7 +394,10 @@ asap_main(PyObject *self, PyObject *args) {
 		if (fmeg==0)
 			mat = read_distmat(f_in, ts_tv, NULL, NULL);
 		else
-			fprintf(stderr, "MEGA format not yet implemented\n");
+			if (fmeg==1)
+				readMatrixMegaCVS(f_in,&mat);
+			else
+				readMatrixMega(f_in,&mat);
 	}
 	fclose(	f_in);
 	fprintf(stderr,"End of matrix distance\n");
