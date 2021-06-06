@@ -11,9 +11,30 @@ diff -w ASAP/asap.c ASAPy/src/asapy/c/asap.c
 <
 49a50
 > #endif
-921,922d921
+55,56c56,58
 <
 <
+---
+> #ifdef _WIN32
+> #define strcasestr strstr
+> #endif
+276a279,287
+> #ifdef _WIN32
+> // Naive solution to replace strcasestr: capitalize everything
+>                       char *s = ligne;
+>                       while (*s) {
+>                               *s = toupper((unsigned char) *s);
+>                               s++;
+>                       }
+> #endif
+>
+430a442,443
+> #ifndef ismodule
+>
+922c935
+<
+---
+> #endif
 diff -w ASAP/asap_common.c ASAPy/src/asapy/c/asap_common.c
 1019c1019
 < 		sprintf(filename,"%s%s/myHisto.svg",workdir,ledir); // all squares are pointing to a different file
