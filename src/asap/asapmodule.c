@@ -122,11 +122,11 @@ char *Built_OutfileName( char *file ){
 }
 
 static PyObject *
-asap_main(PyObject *self, PyObject *args) {
+asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 	/* module specific */
 
-	PyObject *dict;
+	PyObject *dict = kwargs;
 	PyObject *item;
 
 	int withlogfile=0;
@@ -225,19 +225,7 @@ asap_main(PyObject *self, PyObject *args) {
 		asap_param.lenSeq=600;
 
 	// Accept a dictionary-like python object
-	if (!PyArg_ParseTuple(args, "O", &dict))
-		return NULL;
-	if (!PyDict_Check(dict)) {
-		PyErr_SetString(PyExc_TypeError, "asap_main: Argument must be a dictionary");
-		return NULL;
-	}
-
-	if (parseItem(dict, "file", 's', &file_data)) return NULL;
-
-	if (!file_data) {
-		PyErr_SetString(PyExc_KeyError, "asap_main: Mandatory key: 'file'");
-		return NULL;
-	}
+	if (!PyArg_ParseTuple(args, "s", &file_data)) return NULL;
 
 	f_in = fopen(file_data, "r");
 	if (f_in==NULL) {
@@ -677,8 +665,8 @@ asap_main(PyObject *self, PyObject *args) {
 
 
 static PyMethodDef AsapMethods[] = {
-  {"main",  asap_main, METH_VARARGS,
-   "Run ASAP for given parameters."},
+  {"main",  asap_main, METH_VARARGS | METH_KEYWORDS,
+   "Run ASAP on a file for given parameters."},
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -695,7 +683,7 @@ static struct PyModuleDef asapmodule = {
 };
 
 PyMODINIT_FUNC
-PyInit_asapc(void)
+PyInit_asap(void)
 {
 	PyObject *m = NULL;
   m = PyModule_Create(&asapmodule);

@@ -24,7 +24,7 @@ import shutil
 import pathlib
 from datetime import datetime
 
-from . import asapc
+from . import asap
 from . import param
 from . import params
 
@@ -64,13 +64,11 @@ class PartitionAnalysis():
         save results to a temporary directory.
         """
         kwargs = self.param.as_dictionary()
-        kwargs['file'] = self.file
         kwargs['logfile'] = self.useLogfile
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target
-        print(kwargs)
-        asapc.main(kwargs)
+        asap.main(self.file, **kwargs)
         self.results = self.target
 
     def launch(self):

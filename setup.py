@@ -33,7 +33,7 @@ class build_py(_build_py):
         self.run_command('build_qt')
         _build_py.run(self)
 
-asapmodule = Extension('asapy.asapc',
+asapmodule = Extension('asapy.asap',
         include_dirs = ['src/asap'],
         define_macros = [
             ('ismodule', '1')

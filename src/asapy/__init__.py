@@ -1,4 +1,4 @@
 from .core import PartitionAnalysis
-from . import asapc
+from . import asap
 
 import os
