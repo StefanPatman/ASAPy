@@ -269,7 +269,7 @@ class Main(widgets.ToolDialog):
     def draw(self):
         """Draw all widgets"""
         self.header = widgets.Header()
-        self.header.logoTool = widgets.VectorPixmap(':/resources/asap-logo.svg',
+        self.header.logoTool = widgets.VectorPixmap(':/resources/logo-asap.svg',
             colormap=self.colormap_icon)
         self.header.logoProject = QtGui.QPixmap(':/resources/itaxotools-micrologo.png')
         self.header.description = (
