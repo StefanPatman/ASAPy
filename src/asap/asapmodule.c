@@ -128,13 +128,6 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 	PyObject *dict = kwargs;
 	PyObject *item;
-
-	int withlogfile=0;
-	int stdout_bak = -1;
-	int stderr_bak = -1;
-	fpos_t stdout_pos;
-	fpos_t stderr_pos;
-	FILE *flog = NULL;
 	FILE *fres = NULL;
 
 
@@ -243,47 +236,11 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		mkdir(dirfiles, 0700);
 	}
 
-	if (parseItem(dict, "logfile", 'b', &withlogfile)) return NULL;
-
-	if (withlogfile) {
-		file_log = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 8));
-		sprintf(file_log,"%sasap.log",dirfiles);
-		printf("> Redirecting stdout/stderr to file: %s\n", file_log);
-		// printf("BEFORE REDIRECT: \n");
-		// printf("stdout %p\n", stdout);
-		// printf("stderr %p\n", stderr);
-		fflush(stdout);
-		fflush(stderr);
-		fgetpos(stdout, &stdout_pos);
-		fgetpos(stderr, &stderr_pos);
-		stdout_bak = dup(fileno(stdout));
-		stderr_bak = dup(fileno(stderr));
-		#ifdef _WIN32
-		// Open stderr or else the rest will fail for windowed app
-		FILE *dout = freopen("NUL:","w",stdout);
-		FILE *derr = freopen("NUL:","w",stderr);
-		#endif
-		flog = freopen(file_log,"w",stderr);
-		if (flog == NULL) {
-			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to open log file, aborting.");
-			return NULL;
-		}
-		int ddup = dup2(fileno(stderr), fileno(stdout));
-		if (ddup < 0) {
-			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to redirect stdout, aborting.");
-			return NULL;
-		}
-		// printf("AFTER REDIRECT: \n");
-		// printf("stdout %p\n", stdout);
-		// printf("stderr %p\n", stderr);
-		// printf("ddup %d\n", ddup);
-		// printf("stdout_bak %p\n", stdout_bak);
-		// printf("stderr_bak %p\n", stderr_bak);
-	}
-
 	/*
 		Header
 	*/
+	fflush(stdout);
+	fflush(stderr);
 	fprintf(stderr, "/*\n");
 	fprintf(stderr, "\tASAP (Agglomerate Specimens by Automatic Processing)\n");
 	fprintf(stderr, "\twill delineate species in your dataset in a few moments.\n");
@@ -294,7 +251,6 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	printf("> Passing parameters to ASAP\n", file_data);
 	printf("- file = %s\n", file_data);
 	printf("- dirfiles = %s\n", dirfiles);
-	printf("- withlogfile = %i\n", withlogfile);
 
 	if (parseItem(dict, "time", 's', &thedate)) return NULL;
 	if (!thedate) thedate = thedate_default;
@@ -329,6 +285,8 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 
 	printf("\n> Begin ASAP core:\n\n");
+	fflush(stdout);
+	fflush(stderr);
 
 	if (seed_asap== -1)
 		srand( time(NULL) );
@@ -638,35 +596,23 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 //	fclose(	f_out);
 
-	if ((withlogfile) && !(stdout_bak < 0) && !(stderr_bak < 0)) {
-		fflush(stdout);
-		fflush(stderr);
-		int dout = dup2(stdout_bak, fileno(stdout));
-		int derr = dup2(stderr_bak, fileno(stderr));
-		close(stdout_bak);
-		close(stderr_bak);
-		clearerr(stdout);
-		clearerr(stderr);
-		fsetpos(stdout, &stdout_pos);
-		fsetpos(stderr, &stderr_pos);
-		fclose(flog);
-		if ((dout < 0) || (derr < 0)) {
-			PyErr_SetString(PyExc_SystemError, "asap_main: Failed to restore output.");
-			return NULL;
-		}
-		printf("< Restored stdout/stderr\n");
-		fflush(stdout);
-		fflush(stderr);
-	}
-
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
 
+static PyObject *
+asap__freopen(PyObject *self, PyObject *args) {
+	FILE *dout = freopen("NUL:","w",stdout);
+	FILE *derr = freopen("NUL:","w",stderr);
+	return Py_BuildValue("(ii)", fileno(stdout), fileno(stderr));
+}
+
 static PyMethodDef AsapMethods[] = {
   {"main",  asap_main, METH_VARARGS | METH_KEYWORDS,
    "Run ASAP on a file for given parameters."},
+	{"_freopen",  asap__freopen, METH_VARARGS,
+	"Reopen stdout/stderr."},
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

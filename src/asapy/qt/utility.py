@@ -305,13 +305,17 @@ class UProcess(QtCore.QThread):
         err = PipeIO(self.pipeErr, 'w')
         inp = PipeIO(self.pipeIn, 'r')
 
-        # import sys
-        # sys.stdout.close()
-        sys.stdout = out
-        sys.stderr = err
-        sys.stdin = inp
+        # No need to redirect stdio to pipe for this app
+        # Causes problems with core redirection if enabled
 
-        print('PROCESS STDIO CONFIGURED SUCCESSFULLY')
+        # out.fileno = sys.stdout.fileno
+        # err.fileno = sys.stderr.fileno
+        # inp.fileno = sys.stdin.fileno
+        # sys.stdout = out
+        # sys.stderr = err
+        # sys.stdin = inp
+
+        # print('PROCESS STDIO CONFIGURED SUCCESSFULLY')
 
         try:
             result = function(*args, **kwargs)
