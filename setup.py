@@ -33,18 +33,22 @@ class build_py(_build_py):
         self.run_command('build_qt')
         _build_py.run(self)
 
-asapmodule = Extension('asapy.asapc',
-                    include_dirs = ['src/asapy/c'],
-                    sources = [
-                        'src/asapy/c/asapmodule.c',
-                        'src/asapy/c/asap_common.c',
-                        'src/asapy/c/asap_core.c',
-                        'src/asapy/c/draw.c',
-                        'src/asapy/c/gdtosvg.c',
-                        'src/asapy/c/oldfns.c',
-                        ],
-                    extra_compile_args = ["-w"],
-                        )
+asapmodule = Extension('asapy.asap',
+        include_dirs = ['src/asap'],
+        define_macros = [
+            ('ismodule', '1')
+            ],
+        sources = [
+            'src/asap/asapmodule.c',
+            'src/asap/asap_common.c',
+            'src/asap/asap_core.c',
+            'src/asap/asap.c',
+            'src/asap/draw.c',
+            'src/asap/gdtosvg.c',
+            'src/asap/oldfns.c',
+            ],
+        extra_compile_args = ["-w"],
+    )
 
 # Get the long description from the README file
 long_description = (here / 'README.md').read_text(encoding='utf-8')
@@ -55,7 +59,7 @@ setup(
     name='asapy',
 
     # Versions should comply with PEP 440
-    version='0.0.2',
+    version='0.1.1',
 
     # This is a one-line description or tagline of what your project does
     description='A Python wrapper for ASAP',  # Optional

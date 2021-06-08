@@ -106,9 +106,10 @@ class Main(widgets.ToolDialog):
     def __init__(self, parent=None, init=None):
         super(Main, self).__init__(parent)
 
-        logging.getLogger().setLevel(logging.DEBUG)
+        self.logger = logging.getLogger('iTaxotools.ASAPy')
+        self.logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler(sys.stdout)
-        logging.getLogger().addHandler(handler)
+        self.logger.addHandler(handler)
 
         self.title = 'ASAPy'
         self.analysis = core.PartitionAnalysis(None)
@@ -691,7 +692,6 @@ class Main(widgets.ToolDialog):
 
     def workRun(self):
         """Runs on the UProcess, defined here for pickability"""
-        self.analysis.useLogfile = True
         self.analysis.run()
         # time.sleep(3)
         return self.analysis.results
@@ -711,6 +711,8 @@ class Main(widgets.ToolDialog):
 
     def handlePreview(self, item):
         """Called by file double-click"""
+        if item is None:
+            return
         try:
             path = pathlib.Path(item.file)
             self.pane['preview'].footer = path.name

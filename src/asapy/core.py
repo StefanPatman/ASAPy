@@ -22,11 +22,51 @@ from multiprocessing import Process
 import tempfile
 import shutil
 import pathlib
+import os
+import sys
+from contextlib import contextmanager
 from datetime import datetime
 
-from . import asapc
+from . import asap
 from . import param
 from . import params
+
+
+@contextmanager
+def _redirect(stream='stdout', dest=None):
+    """Redirect system stream to file stream"""
+    # High-level redirection
+    original = getattr(sys, stream)
+    original.flush()
+    setattr(sys, stream, dest)
+    # Low-level redirection
+    duplicate = os.dup(original.fileno())
+    os.dup2(dest.fileno(), original.fileno())
+    try:
+        yield dest
+    finally:
+        # Restore stream
+        os.dup2(duplicate, original.fileno())
+        dest.flush()
+        setattr(sys, stream, original)
+
+@contextmanager
+def redirect(stream='stdout', dest=None, mode='w'):
+    """
+    Redirect system stream according to `dest`:
+    - If None: Do nothing
+    - If String: Open file and redirect
+    - Else: Assume IOWrapper, redirect
+    """
+    if dest is None:
+        yield getattr(sys, stream)
+    elif isinstance(dest, str):
+        with open(dest, mode) as file, _redirect(stream, file) as f:
+            yield f
+    else:
+        with _redirect(src, tar) as f:
+            yield f
+
 
 class PartitionAnalysis():
     """
@@ -64,13 +104,22 @@ class PartitionAnalysis():
         save results to a temporary directory.
         """
         kwargs = self.param.as_dictionary()
-        kwargs['file'] = self.file
-        kwargs['logfile'] = self.useLogfile
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target
-        print(kwargs)
-        asapc.main(kwargs)
+        # When running as Windows GUI app, stdout and stderr are NullWriters
+        # that don't define fileno(). In this case, freopen must be called
+        # before redirecting or "Bad file descriptor" error will occur.
+        if (not hasattr(sys.stdout, 'fileno') or
+            not hasattr(sys.stderr, 'fileno')):
+            out, err = asap._freopen()
+            sys.stdout = open(os.devnull, 'w')
+            sys.stderr = open(os.devnull, 'w')
+            sys.stdout.fileno = lambda: out
+            sys.stderr.fileno = lambda: err
+        with open(str(pathlib.Path(self.target) / "asap.log"), 'w') as logfile, \
+                _redirect('stdout', logfile), _redirect('stderr', logfile):
+            asap.main(self.file, **kwargs)
         self.results = self.target
 
     def launch(self):

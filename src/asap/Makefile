@@ -12,4 +12,3 @@ asap:	oldfns.c asap.c asap_common.c asap_core.c gdtosvg.c  draw.c
 
 clean:
 	\rm -f asap web_asap.cgi *.o
-

@@ -52,7 +52,6 @@
 #endif
 
 
-
 /*check if we have at least one common symbol beetween the 2 seqs*/
 /*--------------------------------------------*/
 void print_distmat(  struct DistanceMatrix distmat  ) {
@@ -656,6 +655,7 @@ void clean_str(char *ch)
 void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FILE *f2, char *ledir,FILE *fres) {
 
 #ifndef _WIN32
+
 	int i, j, k = 0, ng = 1;
 	char nom[100], *bou;
 	char chiffre[10];
@@ -1287,8 +1287,8 @@ void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *
 	{
 
 		if (*pt == '\n' && ( (*(pt + 1) == '\r') || (*(pt + 1) == 10) || (*(pt + 1) == 13) ) ) if (nb != 0) break;
-		//if (*pt == '\n' && isalnum(*(pt + 1))) {nb++;  }
-		if (*pt == '[') {nb++;  }
+		if (*pt == '\n' && isalnum(*(pt + 1))) {nb++;  }
+		//if (*pt == '[') {nb++;  }
 //	if (*pt=='\n') printf("***RC %d %d<BR>",*pt,*(pt+1));
 		pt++;
 	}
@@ -1406,8 +1406,8 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 
 	if (fmega == 5)
 		readMatrixMegaCVS_string(data, &my_mat, ledir, fres);
-	else if (strcasestr((const char *)data, "#mega") != NULL )
-		readMatrixMega_string(data, &my_mat, ledir, fres);
+	//else if (strcasestr((const char *)data, "#mega") != NULL )
+	//	readMatrixMega_string(data, &my_mat, ledir, fres);
 	else /* classic phylip distance matrix*/
 	{
 
@@ -1766,13 +1766,6 @@ fprintf(stderr,"DONE\n");
 	return my_mat;
 
 }
-
-
-
-
-
-
-
 
 
 void free_distmat(  struct DistanceMatrix mat ) {
