@@ -439,9 +439,11 @@ class Main(widgets.ToolDialog):
         self.state['idle_none'] = QtCore.QState(self.state['idle'])
         self.state['idle_open'] = QtCore.QState(self.state['idle'])
         self.state['idle_done'] = QtCore.QState(self.state['idle'])
-        self.state['idle_updated'] = QtCore.QState(self.state['idle'])
+        self.state['idle_unchanged'] = QtCore.QState(self.state['idle_done'])
+        self.state['idle_updated'] = QtCore.QState(self.state['idle_done'])
         self.state['idle_last'] = QtCore.QHistoryState(self.state['idle'])
         self.state['idle'].setInitialState(self.state['idle_none'])
+        self.state['idle_done'].setInitialState(self.state['idle_unchanged'])
         self.state['running'] = QtCore.QState()
 
         state = self.state['idle']
@@ -490,6 +492,16 @@ class Main(widgets.ToolDialog):
         state.assignProperty(self.pane['list'], 'enabled', False)
         state.assignProperty(self.pane['preview'], 'enabled', False)
 
+        state = self.state['idle_unchanged']
+        def onEntry(event):
+            self.pane['param'].flag = None
+            self.pane['list'].flag = None
+            self.pane['preview'].flag = None
+            self.pane['param'].flagTip = None
+            self.pane['list'].flagTip = None
+            self.pane['preview'].flagTip = None
+        state.onEntry = onEntry
+
         state = self.state['idle_updated']
         def onEntry(event):
             tip = ( 'Parameters have changed,\n' +
@@ -501,14 +513,6 @@ class Main(widgets.ToolDialog):
             self.pane['list'].flagTip = tip
             self.pane['preview'].flagTip = tip
         state.onEntry = onEntry
-        def onExit(event):
-            self.pane['param'].flag = None
-            self.pane['list'].flag = None
-            self.pane['preview'].flag = None
-            self.pane['param'].flagTip = None
-            self.pane['list'].flagTip = None
-            self.pane['preview'].flagTip = None
-        state.onExit = onExit
 
         transition = utility.NamedTransition('OPEN')
         def onTransition(event):
@@ -544,7 +548,7 @@ class Main(widgets.ToolDialog):
             msgBox.setDefaultButton(QtWidgets.QMessageBox.Ok)
             self.msgShow(msgBox)
         transition.onTransition = onTransition
-        transition.setTargetState(self.state['idle_done'])
+        transition.setTargetState(self.state['idle_unchanged'])
         self.state['running'].addTransition(transition)
 
         transition = utility.NamedTransition('UPDATE')
