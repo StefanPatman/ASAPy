@@ -315,7 +315,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + 20)));
 	sprintf(namegroups,"%sgroups.svg",dirfiles);
-	sprintf(fout, "%sasap.all", dirfiles);
+	sprintf(fout, "%spartitions.tab", dirfiles);
 
 	asap_param.f_out = fopen(fout, "w+");
 	asap_param.fres=stdout;
@@ -470,7 +470,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 
 	file_res = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 10));
-	sprintf(file_res,"%sscores.log",dirfiles);
+	sprintf(file_res,"%sscores.tab",dirfiles);
 	fres = fopen(file_res,"w");
 
 	fprintf(stderr, "> writing scores file\n",asap_param.lenSeq);

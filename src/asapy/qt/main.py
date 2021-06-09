@@ -73,7 +73,7 @@ class ResultView(QtWidgets.QListWidget):
         path = pathlib.Path(folder)
 
         # result files
-        for file in sorted(list(path.glob('*.all'))):
+        for file in sorted(list(path.glob('*.tab')), reverse=True):
             ResultItem(str(path / file), self)
 
         # graph files
@@ -245,7 +245,7 @@ class Main(widgets.ToolDialog):
                 },
             }
 
-        ResultItem.Icons['.all'] = \
+        ResultItem.Icons['.tab'] = \
             QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
                 colormap=self.colormap_icon))
         ResultItem.Icons['.txt'] = \
@@ -608,12 +608,12 @@ class Main(widgets.ToolDialog):
         nameFiltersWithSelectors = {
             'All files (*)': fromFilter('*.*'),
             'Selected files (*)': fromSelection,
+            'Table files (*.tab)': fromFilter('*.tab'),
             'Spart files (*.spart)': fromFilter('*.spart'),
             'Partition files (*.txt)': fromFilter('*.txt'),
             'Tree files (*.tree)': fromFilter('*.tree'),
             'Vector Graphics (*.svg)': fromFilter('*.svg'),
             'Log files (*.log)': fromFilter('*.log'),
-            'Result files (*.all)': fromFilter('*.all'),
             }
 
         # Widget-based dialog, filters decide what files are saved
