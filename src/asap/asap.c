@@ -49,9 +49,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef _WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #include <dirent.h>
+#else
 #define strcasestr strstr
 #endif
 

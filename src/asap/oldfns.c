@@ -42,10 +42,11 @@
 #include "asap.h"
 #include "oldfns.h"
 
-#ifdef _WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #include <strings.h>
 #include <dirent.h>
+#else
 #define strcasestr strstr
 #endif
 
