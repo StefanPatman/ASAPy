@@ -91,6 +91,7 @@ void exit_properly(char *ledir)
 	sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
 
 	system(commande);
+	exit(1);
 	}
 }
 /*--------------------------------------------------*/
@@ -907,10 +908,10 @@ void nwkOut ( Node *zenodes, FILE *f ,int whichnode)
 
 	if (zenodes[whichnode].nbdesc==0)  {
 
-		fprintf(f,"%s_GR%d", zenodes[whichnode].name,zenodes[whichnode].specnumber);
+		fprintf(f,"%s_Group_%d", zenodes[whichnode].name,zenodes[whichnode].specnumber);
 
 
-		fprintf(f,":%lf",zenodes[whichnode].dist);
+		//fprintf(f,":%lf",zenodes[whichnode].dist);
 
 	}
 	else {
@@ -924,10 +925,12 @@ void nwkOut ( Node *zenodes, FILE *f ,int whichnode)
 			fprintf(f,")");
 
 
-				fprintf(f,":%f",zenodes[whichnode].pval);
+				fprintf(f,":%f",zenodes[whichnode].dist);
 	}
 
 }
+
+
 
 /*--------------------------------------------------*/
 /*Put a distance matrix (n  n) into a struct of size (n*(n-1))/2 which can be sorted according to distance*/
@@ -1018,7 +1021,6 @@ int largeur=360;
 
 	sprintf(filename,"%s%s/histogram.svg",workdir,ledir); // all squares are pointing to a different file
 
-
 	//sprintf(filename,"%s.disthist.svg",file);
 
 	svgout=fopen(filename,"w");
@@ -1031,10 +1033,12 @@ int largeur=360;
 	if (histo==NULL)
 	fprintf(stderr,"pb malloc histo(1)\n"),exit(1);
 
+	//histocum=malloc(sizeof(float)*nbcomp+1);
 	nbcum=(dist_mat.n*dist_mat.n-1)/2;
 	histocum=malloc(sizeof(float)*nbcum+1);
 	if (histocum==NULL)
 	fprintf(stderr,"pb malloc histo(2)\n"),exit(1);
+
 	for (i=0;i<nbbids;i++)histo[i]=0;
 
 	k=0;
@@ -1804,14 +1808,14 @@ for (i=0;i<scores[partition].nb_nodes;i++)
 	}
 }
 /*--------------------------------------------------*/
-void ecrit_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f)
+void ecrit_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,int j)
 {
 int i;
 	if (zenodes[nodetodraw].nbdesc==0)
-		fprintf(f,"%s ",zenodes[nodetodraw].name);
+		{fprintf(f,"%s ",zenodes[nodetodraw].name);	zenodes[nodetodraw].specnumber=j;}
 	else
 		for (i=0;i<zenodes[nodetodraw].nbdesc;i++ )
-			ecrit_esp_sous_node( zenodes,zenodes[nodetodraw].desc[i], f);
+			ecrit_esp_sous_node( zenodes,zenodes[nodetodraw].desc[i], f,j);
 }
 
 void find_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
@@ -1823,7 +1827,7 @@ int i;
 
 for (i=0;i<nb;i++)
 {
-//	printf("%d %s\n",i,myspar[i].name);
+	//printf("%s\n",myspar[i].name);
 	if (strcmp(myspar[i].name,name)==0)
 		{
 
@@ -1832,6 +1836,7 @@ for (i=0;i<nb;i++)
 		//return(myspar[i].name);
 		}
 	}
+//printf("\n------------------------\n");
 //return("");
 }
 
@@ -1843,7 +1848,8 @@ if ( (zenodes[nodetodraw].pval> seuil|| zenodes[nodetodraw].pval<0) && (zenodes[
  	{
  		scores->proba_part[*j]=zenodes[nodetodraw].pval;
  		fprintf(f,"\nGroup[ %d ] n: %d ;id: ",(*j)+1,zenodes[nodetodraw].nb_under);
- 		ecrit_esp_sous_node(zenodes,nodetodraw,f);
+ 		zenodes[nodetodraw].specnumber=*j;
+ 		ecrit_esp_sous_node(zenodes,nodetodraw,f,*j);
  		(*j)++;
  	}
 else
@@ -1861,6 +1867,7 @@ int i;
 	if (nodetodraw[thenode].nbdesc==0)
 	{
 		fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);
+
 		find_spart_name(nodetodraw[thenode].name,myspar,sprec+1,nbind,round);
 
 	}
@@ -2036,11 +2043,12 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 
 }
 /*Si tri avant alors spart pas ok sinon debut spart ok mais pas les parts et fichier groups non plus*/
-void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind)
+void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind,int lastnode)
 {
 int i,j=0,jj=0,k,l,nb_ok=0,rank;
 FILE *f;
 FILE *f_l;
+FILE *f_nw;
 //FILE *f_sp;
 char nom_fic[1024];
 
@@ -2058,6 +2066,10 @@ for (k=0;k<nbres_tot;k++)
 			f=fopen (nom_fic,"w");
 			sprintf(nom_fic,"%s/group_%d.csv",dirfiles,rank+1);
 			f_l=fopen (nom_fic,"w");
+
+			//sprintf(nom_fic,"%s/tree_%d",dirfiles,rank+1);
+			//f_nw=fopen (nom_fic,"w");
+
 			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
 			fprintf(f,"Partition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
 			fprintf(f,"------------------------------------------------------------\n");
@@ -2081,7 +2093,7 @@ for (k=0;k<nbres_tot;k++)
 									int aa=	zenodes[nodetodraw].desc[l];
 									fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
 									scores[k].proba_part[j]=zenodes[aa].pval;
-									ecrit_esp_sous_node(zenodes,aa,f);
+									ecrit_esp_sous_node(zenodes,aa,f,j+1);
 								//
 									ecrit_esp_cvs(zenodes,aa,f_l,jj,myspar,nbind,rank);
 									j++;jj++;
@@ -2109,7 +2121,7 @@ for (k=0;k<nbres_tot;k++)
 
 						fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
 								scores[k].proba_part[j]=zenodes[nodetodraw].pval;
-						ecrit_esp_sous_node(zenodes,nodetodraw,f);
+						ecrit_esp_sous_node(zenodes,nodetodraw,f,j+1);
 
 						ecrit_esp_cvs(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank);
 
@@ -2134,9 +2146,11 @@ for (k=0;k<nbres_tot;k++)
 
 				} //end of i
 			nb_ok++;
+			//nwkOut (zenodes, f_nw ,lastnode);
+			//fprintf(f_nw,";");
 			fclose(f);
 			fclose(f_l);
-
+			//fclose(f_nw);
 			}//end of scorek.
 
 

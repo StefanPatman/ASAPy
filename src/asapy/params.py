@@ -9,14 +9,10 @@ params = {
                 "default":  True
             },
             "mega": {
-                "label":    "MEGA Format",
-                "doc":      "Set if the distance Matrix is supposed to be MEGA\n(other formats are guessed).",
-                "type":     "list",
-                "default":  0,
-                "data": {
-                "items":  [0,1,2],
-                "labels": ["Other","MEGA CVS","MEGA 5"]
-                }
+                "label":    "MEGA CSV",
+                "doc":      "Set if the provided distance Matrix is CSV file\nexported from MEGA 6 or X.",
+                "type":     "bool",
+                "default":  False
             },
             "sequence_length": {
                 "label":    "Sequence length",
@@ -30,23 +26,17 @@ params = {
         "label": "Advanced",
         "doc": "Advanced",
         "fields": {
-            "replicates": {
-                "label":    "Replicates",
-                "doc":      "Number of replicates for statistical tests.",
+            "number": {
+                "label":    "Scores Kept",
+                "doc":      "Number of results with the highest scores to be displayed.",
                 "type":     "int",
-                "default":  1000
+                "default":  10
             },
             "seuil_pvalue": {
-                "label":    "Pvalue Threshold",
+                "label":    "Probability",
                 "doc":      "Limit for results to be reported.",
                 "type":     "float",
-                "default":  0.001
-            },
-            "pond_pente": {
-                "label":    "Pond Pente",
-                "doc":      "Limit for results to be reported.",
-                "type":     "float",
-                "default":  0.1
+                "default":  0.01
             },
             "seed": {
                 "label":    "Seed",
@@ -54,6 +44,18 @@ params = {
                 "type":     "int",
                 "default":  -1
             },
+            # "replicates": {
+            #     "label":    "Replicates",
+            #     "doc":      "Number of replicates for statistical tests.",
+            #     "type":     "int",
+            #     "default":  1000
+            # },
+            # "pond_pente": {
+            #     "label":    "Pond Pente",
+            #     "doc":      "Internal parameter, for testing only.",
+            #     "type":     "float",
+            #     "default":  0.1
+            # },
         }
     },
     "distance": {

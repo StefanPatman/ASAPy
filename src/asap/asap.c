@@ -44,16 +44,14 @@
 #include "oldfns.h"
 //#include "drawMat.h"
 #include "gdtosvg.h"
-#ifndef _WIN32
-#include <unistd.h>
-#include <dirent.h>
-#endif
 #include <errno.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #ifdef _WIN32
+#include <unistd.h>
+#include <dirent.h>
 #define strcasestr strstr
 #endif
 
@@ -94,10 +92,10 @@ void usage(char *arg)
 	\t-o #  : directory where results files are written (default is where the script is run)\n\
 	\t-l #	: original length of seqs if a distance matrix was provided (default value 600)\n\
 	\t-t #  : transition/transversion (for Kimura) default:2\n\
-	\t-p #  : slope ponderation for asap score calculation: default is 0.5\n\
+	\t-n #  : nbr of best scores to be kept (default 10))\n\
 	\t-x #  : seed value\n");
 
-
+/*	\t-p #  : slope ponderation for asap score calculation: default is 0.5\n\*/
 
 	exit(1);
 
@@ -147,6 +145,143 @@ return(ligne);
 
 
 
+int check_nbr(char *nb)
+{
+	int i, l=strlen(nb);
+	//printf("%s-->%d\n",nb,l);
+	for (i=0;i<l;i++)
+		{
+		//printf("car:%c %d -->%d\n",nb[i],nb[i], isdigit(nb[i]));
+		if (isdigit(nb[i])) continue;
+		if (nb[i]=='.')continue;
+		if (nb[i]=='+')continue;
+		if (nb[i]=='-')continue;
+		if (nb[i]=='e')continue;
+		if (nb[i]=='E')continue;
+		if (nb[i]==' ')continue;
+		return (0);
+		}
+return (1);
+}
+
+
+
+
+
+void read_mega10(FILE *f_in,struct DistanceMatrix *my_mat)
+{
+int nb=0,a,b,c;
+int nbcharmax=NBCHARMALLOC,to_alloc=0;
+char *ligne,letter,nombre [128];
+int i,l,w=0;;
+long ppos;
+//float ff;
+//long posit;
+
+	printf("CVS MEGA X FILE\n");fflush(stdout);
+
+	ligne=(char *)malloc(sizeof(char)*nbcharmax);
+	*ligne='\0';
+
+
+	ligne=my_get_line(ligne,f_in,&nbcharmax);
+	l=strlen(ligne);
+	//printf("ligne:%d char\n",l);
+	for (i=0;i<l;i++)
+		if (ligne[i]==',')
+			nb++;
+
+	nb=nb+1;
+	printf("%ld seq\n",nb);fflush(stdout);
+
+	my_mat->n = nb;
+
+	my_mat->names = (char **)malloc( (size_t) sizeof(char *)*my_mat->n );
+	if( ! my_mat->names )fprintf(stderr, "read_distmat: cannot allocate my_mat.names, bye"), exit(4);
+
+/*	for(a=0;a<my_mat->n; a++){
+		my_mat->names[a] = (char *)malloc( (size_t) sizeof(char)*(SIZE_NAME_DIST +1));
+		if( ! my_mat->names[a] )
+			fprintf(stderr, "read_distmat: cannot allocate my_mat.names[%d], bye",a), exit(4);
+	}
+*/
+	my_mat->dist = (double **)malloc( (size_t) sizeof(double *)*my_mat->n );
+	if( ! my_mat->dist)fprintf(stderr, "read_distmat: cannot allocate my_mat.dist, bye"), exit(4);
+	for(a=0;a<my_mat->n; a++){
+		my_mat->dist[a] = (double *)malloc( (size_t) sizeof(double)*my_mat->n );
+		if( ! my_mat->dist[a] )
+			fprintf(stderr, "read_distmat: cannot allocate my_mat.dist[%d], bye",a), exit(4);
+		}
+
+
+for (a=0;a<my_mat->n;a++){
+		c=0;
+		ppos=ftell(f_in);
+		to_alloc=0;
+		while( (letter=fgetc(f_in)) != ','){ //count length of title
+		to_alloc++;
+		}
+		fseek(f_in,ppos,SEEK_SET);
+		my_mat->names[a]=(char *)malloc(sizeof(char)*(to_alloc+2));
+		while( (letter=fgetc(f_in)) != ','){
+				my_mat->names[a][c] = (char)letter;
+				c++;
+			}
+		//printf("%d %d\n",c,to_alloc);
+		my_mat->names[a][c]='\0';
+	//printf("--->%s\n",my_mat->names[a]);
+		for (b=0;b<a;b++)
+			{
+
+			c=0;
+			while( (letter=fgetc(f_in)) != ',' && !feof(f_in)){
+				if (letter=='?'){
+				fprintf(stderr,"**Warning distance between %s and %s is unknown,exiting<BR>\n",my_mat->names[a],my_mat->names[b]);exit(1);
+				}
+
+				nombre[c]=(char) letter;
+				c++;
+
+				}
+			if (feof(f_in)) printf("your MEGA format can't be read. asap only reads MEGA 6 or MEGA X csv format\n"),exit(1);
+	    	nombre[c]='\0';
+	    	//
+	    //printf("%s %d %d %s\n",my_mat->names[a],a,b,nombre);
+	    	if (c==0)
+	    		my_mat->dist[b][a]=my_mat->dist[a][b]=0;
+	    	else
+	    		{
+	    		if(check_nbr(nombre)==0) {printf("your MEGA format can't be read. asap only reads MEGA 6 or MEGA X csv format\n");exit(1);}
+				my_mat->dist[b][a]=my_mat->dist[a][b]=strtod(nombre,NULL);
+				if (my_mat->dist[b][a]<0)
+					{
+					if (w==0){printf("negative distances have been found. Asap can't deal with that, your distance will be assumed to be 0\n");w=1;}
+					my_mat->dist[b][a]=my_mat->dist[a][b]=0;
+					}
+				}
+			}
+
+		 my_mat->dist[a][a]=0;
+
+		while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
+			{letter=fgetc(f_in);}
+		if (feof(f_in) && b!=a)
+			printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
+
+		}
+/*for (a=0;a<my_mat->n;a++)
+{
+printf("%s ",my_mat->names[a]);
+for (b=0;b<my_mat->n;b++)
+	printf("%5.4f ",my_mat->dist[a][b]);
+printf("\n");
+}	*/
+
+free(ligne);
+
+	}
+
+
 
 
 /*Read CVS mega matrix which is the default for MEGA 5*/
@@ -154,15 +289,17 @@ void readMatrixMegaCVS(FILE *f_in,struct DistanceMatrix *my_mat)
 {
 int nb=0,a,b,c;
 int nbcharmax=NBCHARMALLOC,to_alloc=0;
-char *ligne,letter,nombre [12];
+char *ligne,letter,nombre [128];
 long ppos;
 //float ff;
 //long posit;
 
 	printf("CVS MEGA FILE\n");fflush(stdout);
-	ligne=(char *)malloc(sizeof(char)*nbcharmax);
-	*ligne='\0';
 
+
+
+	ligne=(char *)malloc(sizeof(char)*nbcharmax);
+		*ligne='\0';
 	while (1)
 		{
 		ligne=my_get_line(ligne,f_in,&nbcharmax);
@@ -213,11 +350,11 @@ for (a=0;a<my_mat->n;a++){
 			}
 
 		my_mat->names[a][c]='\0';
-
+		//printf("--->%s\n",my_mat->names[a]);
 		for (b=0;b<a;b++)
 			{
 			c=0;
-			while( (letter=fgetc(f_in)) != ','){
+			while( (letter=fgetc(f_in)) != ',' && !feof(f_in)){
 				if (letter=='?'){
 				fprintf(stderr,"**Warning distance between %s and %s is unknown,exiting<BR>\n",my_mat->names[a],my_mat->names[b]);exit(1);
 				}
@@ -225,20 +362,24 @@ for (a=0;a<my_mat->n;a++){
 				nombre[c]=(char) letter;
 				c++;
 			}
+
 	    	nombre[c]='\0';
-	    	//printf("%s %d %d %s\n",my_mat->names[a],a,b,nombre);
+	    	//
+	    //printf("%s %d %d %s\n",my_mat->names[a],a,b,nombre);
 	    	if (c==0)
 	    		my_mat->dist[b][a]=my_mat->dist[a][b]=0;
 	    	else
+	    	{
+	    	if(check_nbr(nombre)==0) {printf("your MEGA format can't be read. asap only reads MEGA 6 or MEGA X csv format\n");exit(1);}
 			my_mat->dist[b][a]=my_mat->dist[a][b]=strtod(nombre,NULL);
-
+			}
 			}
 		 my_mat->dist[a][a]=0;
 
 	while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 		{letter=fgetc(f_in);}
 	if (feof(f_in) && b!=a)
-		printf("%d %d pb reading matrix CVS\n",a,b),exit(1);
+		printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
 
 	}
 //for (a=0;a<my_mat->n;a++)
@@ -277,28 +418,28 @@ void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat)
 			fscanf(f_in,"%[^\n]\n",ligne);
 
 #ifdef _WIN32
-// Naive solution to replace strcasestr: capitalize everything
-			char *s = ligne;
-			while (*s) {
-				*s = toupper((unsigned char) *s);
-				s++;
-			}
+			// Naive solution to replace strcasestr: capitalize everything
+			    char *s = ligne;
+			    while (*s) {
+			      *s = toupper((unsigned char) *s);
+			      s++;
+			    }
 #endif
 
 			if (feof(f_in)) printf("pb reading file...\n"),exit(1);
 
-		 	if (strcasestr(ligne," of Taxa :") != NULL)
+		 	if (strcasestr(ligne," OF TAXA :") != NULL)
 				my_mat->n=atoi(strchr(ligne,':')+1);
 
-			if (strcasestr(ligne,"NTaxa=") !=NULL)
-				my_mat->n=atoi(strchr(strcasestr(ligne,"NTaxa="),'=')+1);
+			if (strcasestr(ligne,"NTAXA=") !=NULL)
+				my_mat->n=atoi(strchr(strcasestr(ligne,"NTAXA="),'=')+1);
 
-			if (strcasestr(ligne,"DataFormat=")!=NULL)
+			if (strcasestr(ligne,"DATAFORMAT=")!=NULL)
 				{
-				if (strcasestr(ligne,"Lowerleft")!=NULL)
+				if (strcasestr(ligne,"LOWERLEFT")!=NULL)
 					lower=1;
 				else
-					if (strcasestr(ligne,"upperright")!=NULL)
+					if (strcasestr(ligne,"UPPERRIGHT")!=NULL)
 						lower=0;
 					else
 					printf("Unknown data format\n"),exit(1);
@@ -541,7 +682,7 @@ struct stat     statbuf;
 	/*
 		parse options
 	*/
-	while ( (c = getopt(argc, argv, "o:l:p:d:amhr:b:")) != -1 ) {
+	while ( (c = getopt(argc, argv, "o:l:n:p:d:amhr:b:")) != -1 ) {
 
 		switch (c) {
 			case 'a':
@@ -575,6 +716,11 @@ struct stat     statbuf;
 			case 't':
 				ts_tv = atof(optarg);		/* trans/trav rate */
 				break;
+
+			case 'n':
+				nbBestAsap = atoi(optarg);		/* nb scores */
+				break;
+
 
 			case 'm':
 				fmeg = 1;			/*if present format mega CVS*/
@@ -650,6 +796,8 @@ struct stat     statbuf;
 	sprintf(fout, "%s%s.all", dirfiles, simple_name);
 
 	asap_param.f_out = fopen(fout, "w+");
+	asap_param.fres=stdout;
+	asap_param.web=0;
 	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
 
 	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
@@ -666,7 +814,10 @@ struct stat     statbuf;
 	rewind(f_in);
 	if ( c == '>'){
 		fprintf(stderr, "> asap is reading the fasta file and computing the distance matrix\n");
-		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+
+
+	//mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),asap_param);
 	}
 	else
 	{
@@ -675,9 +826,20 @@ struct stat     statbuf;
 			mat = read_distmat(f_in, ts_tv, NULL, NULL);
 		else
 			if (fmeg==1)
-				readMatrixMegaCVS(f_in,&mat);
-			else
-				readMatrixMega(f_in,&mat);
+				{
+					c=fgetc(f_in);
+					fputc(c,f_in);
+
+					if (c==',')
+					{
+						read_mega10(f_in,&mat);printf("done 10\n");
+					}
+					else
+					readMatrixMegaCVS(f_in,&mat);
+				}
+			//else
+				//readMatrixMega(f_in,&mat);
+
 
 	}
 	fclose(	f_in);
@@ -726,6 +888,7 @@ struct stat     statbuf;
 	//build the sorted struct from smallest dist to higher dist
 for (i=0;i<mat.n;i++)
 			scores[i].listNodes=malloc(sizeof(int)*mat.n);
+
 
 	initcomp(&comp, mat.n, stderr, "");
 	inittabcompo(strucompo, mat.n, stderr, "");       /* the structures are oversized currently */
@@ -799,7 +962,7 @@ for (i=0;i<mat.n;i++)
 		scores[i].rank_general=i+1;
 
 
-	fprintf(stderr, "\n> 10 Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
+	fprintf(stderr, "\n> %d Best scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
 	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
@@ -886,7 +1049,7 @@ if (withallfiles)
 	for (i=0;i<nb_B;i++)
 		o_sp[i]=malloc(sizeof(int)*2);
 	//fprintf(stderr,"go ecrit\n");
-	ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);
+	ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node);
 	//fprintf(stderr,"go order\n");
 	order_spart(o_sp,nb_B,myspar,mat.n);
 	//fprintf(stderr,"go create\n");

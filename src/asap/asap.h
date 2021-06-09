@@ -144,6 +144,7 @@ float pond_pente;
 FILE *fres;
 FILE *f_out;
 int fit_to_page;
+int web;
 } Parameter;
 
 struct DistanceMatrix {
@@ -199,8 +200,8 @@ void draw_legend(FILE *f, int x, int y);
 void draw_nico(Node *zenodes, FILE *fgroups, int nbspecies,Results *scores,int nresult,double seuil,int nbest,int nbnodes,int largeur_clado);
 void draw_square(Node *zenodes,int nodetodraw,int *spgraph,FILE *fgroups,int marge,int group,int x);
 
-void ecrit_esp_sous_node(Node *nodetodraw,int thenode,FILE *f);
-void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind);
+void ecrit_esp_sous_node(Node *nodetodraw,int thenode,FILE *f,int j);
+void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind, int last);
 //void ecrit_fichier_texte( char *dirfiles,int nbres,Node *zenodes,Results *scores,FILE *fres,float seuil);
 void exit_properly(char *ledir);
 double exponentialdev() ;

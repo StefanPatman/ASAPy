@@ -37,19 +37,19 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#ifndef _WIN32
-#include <unistd.h>
-#include <strings.h>
-#include <dirent.h>
-#endif
 #include <sys/stat.h>
 #include <errno.h>  /* errno */
 #include "asap.h"
 #include "oldfns.h"
 
 #ifdef _WIN32
+#include <unistd.h>
+#include <strings.h>
+#include <dirent.h>
 #define strcasestr strstr
 #endif
+
+#define COMMON_SYMBOL 1
 
 
 /*check if we have at least one common symbol beetween the 2 seqs*/
@@ -193,6 +193,14 @@ switch (nb)
 fclose (f), exit_properly(ledir);
 
  }
+
+int myclose(Parameter asap_param)
+{
+	if (asap_param.web==1)
+		{fclose (asap_param.fres); exit_properly(asap_param.ledir);}
+	else
+		exit(1);
+}
 
 
 
@@ -690,7 +698,7 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 
 }
 
-struct DistanceMatrix compute_dis(FILE *f, int method, float ts_tv, int *len_seq,char *ledir,FILE *fres)
+struct DistanceMatrix compute_dis(FILE *f, int method, float ts_tv, int *len_seq,Parameter asap_parameter)
 {
 	struct FastaSeq *mesSeq;
 
@@ -698,6 +706,8 @@ struct DistanceMatrix compute_dis(FILE *f, int method, float ts_tv, int *len_seq
 	int nalloc = 256;
 	int nseq = 0;
 	struct DistanceMatrix my_mat;   /* store distance matrix, names and matrix size */
+char *ledir=asap_parameter.ledir;
+FILE *fres=asap_parameter.fres;
 
 
 	mesSeq = (struct FastaSeq *)malloc (sizeof (struct FastaSeq ) * nalloc);
@@ -711,17 +721,17 @@ struct DistanceMatrix compute_dis(FILE *f, int method, float ts_tv, int *len_seq
 		{
 			nalloc += 256;
 			mesSeq = realloc(mesSeq, sizeof (struct FastaSeq ) * nalloc);
-			if (mesSeq == NULL) {fprintf(fres,"not enough memory\n"); f_html_error(888,ledir,fres);}
+			if (mesSeq == NULL) {fprintf(fres,"not enough memory\n");  exit(1);}
 		}
 	}
 
 	fprintf(stderr,"done read\n");
 
 	if (check_names(mesSeq, nseq,ledir,fres) == 0)
-		{fprintf(fres,"Two seqs found with same name. Exit\n"); f_html_error(888,ledir,fres);}
+		{fprintf(fres,"Two seqs found with same name. Exit\n");  exit(1);}
 
 //	fprintf(stderr, "get dist mat\n");
-	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,ledir,fres);
+	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,asap_parameter);
 	fprintf(stderr, "done mat\n");
 
 
@@ -734,13 +744,15 @@ struct DistanceMatrix compute_dis(FILE *f, int method, float ts_tv, int *len_seq
 
 
 /*compute a very tricky distance for 2 sequences*/
-void distancesimple(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,char *ledir,FILE *fres)
+void distancesimple(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,Parameter asap_param)
 
 {
 	char *s1, *s2, c1, c2;;
 	double v = 0;
 	int i, a, b, ncor = 0;
 	int nseq = my_mat.n;
+char *ledir=asap_param.ledir;
+FILE *fres=asap_param.fres;
 
 	if (l == 0)
 		f_html_error(100,ledir,fres);
@@ -753,8 +765,9 @@ void distancesimple(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_
 		{
 			v = 0; ncor = 0;
 			s2 = mesSeqs[b].seq;
-			if (check_compat(s1, s2, l) == 0)
-			{fprintf(fres,"<H2>Sequence %s and %s have no common site. Distance can't be computed. Bye <BR>", my_mat.names[a], my_mat.names[b]); fflush(stdout); exit(1);}
+			int ggg=check_compat(s1, s2, l);
+			if (ggg<COMMON_SYMBOL)
+			{fprintf(fres,"<<BR><BR><BR><H3>Sequence %s and %s have %d common site. Distance can't be computed. Bye <BR>", my_mat.names[a], my_mat.names[b],ggg);  myclose(asap_param);}
 
 			for (i = 0; i < l; i++)
 			{
@@ -779,7 +792,7 @@ void distancesimple(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_
 /*do not take in consideration gaps or N*/
 
 
-void distanceJC69 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  mymat,char *ledir,FILE *fres)
+void distanceJC69 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  mymat,Parameter asap_param)
 //double distanceJC69 (char *s1,char *s2, int l)
 {
 	double v = 0, h;
@@ -788,6 +801,8 @@ void distanceJC69 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  myma
 	int a, b;
 	char *s1, *s2;
 	int nseq = mymat.n;
+char *ledir=asap_param.ledir;
+FILE *fres=asap_param.fres;
 
 
 	if (l == 0)
@@ -801,8 +816,9 @@ void distanceJC69 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  myma
 		{
 			s2 = mesSeqs[b].seq;
 			newl = 0; v = 0;
-			if (check_compat(s1, s2, l) == 0)
-			{fprintf(fres,"<H2>Sequence %s and %s have no common site. Distance can't be computed. Bye <BR>", mymat.names[a], mymat.names[b]); fflush(stdout); exit(1);}
+			int ggg=check_compat(s1, s2, l);
+			if (ggg<COMMON_SYMBOL)
+			{fprintf(fres,"<BR><BR><BR><H3>Sequence %s and %s have %d common site. Distance can't be computed. Bye <BR>", mymat.names[a], mymat.names[b],ggg); myclose(asap_param);}
 
 			for (i = 0; i < l; i++)
 			{
@@ -931,20 +947,23 @@ double find_ML_t_given_R( double R, long nsites, long n_tsv, long n_tsi ) {
 	return t;
 }
 
-void distanceK80 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,char *ledir,FILE *fres) {
+void distanceK80 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,Parameter asap_param) {
 	int i, j;
 	long tsi, tsv;
 	long del;
 	int nseq = my_mat.n;
 	double h;
-
+char *ledir=asap_param.ledir;
+FILE *fres=asap_param.fres;
 	for (i = 0; i < nseq; i++) {
 
 		my_mat.dist[i][i] = 0;
 
 		for (j = i + 1; j < nseq; j++) {
-			if (check_compat(mesSeqs[i].seq, mesSeqs[j].seq, l) == 0)
-			{fprintf(fres,"<H2>Sequence %s and %s have no common site. Distance can't be computed. Bye <BR>", my_mat.names[i], my_mat.names[j]); f_html_error(888,ledir,fres);}
+			int ggg=check_compat(mesSeqs[i].seq, mesSeqs[j].seq, l) ;
+
+			if (ggg<COMMON_SYMBOL)
+			{fprintf(fres,"<BR><BR><BR><H3>Sequence %s and %s have %d common site. Distance can't be computed. Bye <BR>", my_mat.names[i], my_mat.names[j],ggg); myclose(asap_param);}
 			transition_transversion_sequences(mesSeqs[i].seq, mesSeqs[j].seq, l, &tsi, &tsv);
 			del = del_sequences(mesSeqs[i].seq, mesSeqs[j].seq, l);
 			h=find_ML_t_given_R( my_mat.ratio_ts_tv, l - del, tsv, tsi );
@@ -985,7 +1004,7 @@ int check_compat(char *s1, char *s2, int l)
 
 /*compute distance according to Tmura Nei method*/
 /*do not take in consideration gaps or N*/
-void distanceTN93(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,char *ledir,FILE *fres)
+void distanceTN93(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_mat,Parameter asap_param)
 {
 	double v = 0;
 	double transitions = 0, transversions = 0,  q, p1, p2, ga, gg, gc, gt, gr, gy;
@@ -998,6 +1017,9 @@ void distanceTN93(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_ma
 	char *s1, *s2;
 	int a, b;
 	int nseq = my_mat.n;
+	char *ledir=asap_param.ledir;
+FILE *fres=asap_param.fres;
+
 
 	if (l == 0)
 		f_html_error(100,ledir,fres);
@@ -1009,8 +1031,9 @@ void distanceTN93(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_ma
 		for (b = a + 1; b < nseq; b++)
 		{
 			s2 = mesSeqs[b].seq;
-			if (check_compat(s1, s2, l) == 0)
-			{fprintf(fres,"<H2>Sequence %s and %s have no common site. Distance can't be computed. Bye <BR>", my_mat.names[a], my_mat.names[b]); f_html_error(888,ledir,fres);}
+			int ggg=check_compat(s1, s2, l);
+			if (ggg<COMMON_SYMBOL)
+			{fprintf(fres,"<BR><BR><BR><H3>Sequence %s and %s have %d common site. Distance can't be computed. Bye <BR>", my_mat.names[a], my_mat.names[b],ggg);  myclose(asap_param);}
 			newl = 0; v = 0;
 			for (i = 0; i < 5; i++)
 				f[i] = 0;
@@ -1055,11 +1078,17 @@ void distanceTN93(struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_ma
 		}
 	}
 }
-struct DistanceMatrix GetDistMat(int nseq, struct FastaSeq *mesSeqs, int method, float ts_tv, char *ledir, FILE *fres)
+
+
+
+//	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,ledir,fres);
+struct DistanceMatrix GetDistMat(int nseq, struct FastaSeq *mesSeqs, int method, float ts_tv, Parameter asap_param)
 {
 
+char *ledir=asap_param.ledir;
+FILE *fres=asap_param.fres;
 	struct DistanceMatrix my_mat;                  /* store distance matrix, names and matrix size */
-	void (*distance) (struct FastaSeq *, int , struct DistanceMatrix ,char *ledir, FILE *fres) = NULL;      /* pointeur de fonction */;
+	void (*distance) (struct FastaSeq *, int , struct DistanceMatrix ,Parameter asap_param) = NULL;      /* pointeur de fonction */;
 	int a;
 	int length;
 
@@ -1089,13 +1118,13 @@ struct DistanceMatrix GetDistMat(int nseq, struct FastaSeq *mesSeqs, int method,
 	my_mat.ratio_ts_tv = ts_tv;
 
 
-	if ( ! my_mat.names )fprintf(fres,"read_distmat: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
+	if ( ! my_mat.names )fprintf(fres,"read_distmat: cannot allocate my_mat.names, bye<BR>"), myclose(asap_param);
 
 	for (a = 0; a < my_mat.n; a++) {
 //		my_mat.names[a] = (char *)malloc( (size_t) sizeof(char)*SIZE_NAME_DIST +1);
 		my_mat.names[a] = (char *)malloc( (size_t) sizeof(char) * (strlen(mesSeqs[a].name) + 1));
 		if ( ! my_mat.names[a] )
-			fprintf(fres,"read_distmat: cannot allocate my_mat.names[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
+			fprintf(fres,"read_distmat: cannot allocate my_mat.names[%d], bye<BR>", a), myclose(asap_param);
 
 		strcpy(my_mat.names[a], mesSeqs[a].name);
 
@@ -1103,15 +1132,15 @@ struct DistanceMatrix GetDistMat(int nseq, struct FastaSeq *mesSeqs, int method,
 	}
 
 	my_mat.dist = (double **)malloc( (size_t) sizeof(double *)*my_mat.n );
-	if ( ! my_mat.dist)fprintf(fres,"read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
+	if ( ! my_mat.dist)fprintf(fres,"read_distmat: cannot allocate my_mat.dist, bye<BR>"), myclose(asap_param);
 	for (a = 0; a < my_mat.n; a++) {
 		my_mat.dist[a] = (double *)malloc( (size_t) sizeof(double) * my_mat.n );
 		if ( ! my_mat.dist[a] )
-			fprintf(fres,"read_distmat: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
+			fprintf(fres,"read_distmat: cannot allocate my_mat.dist[%d], bye<BR>", a), myclose(asap_param);
 	}
 
 
-	distance(mesSeqs, length, my_mat, ledir, fres);
+	distance(mesSeqs, length, my_mat, asap_param);
 
 	return my_mat;
 
@@ -1134,14 +1163,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 	my_mat->names = NULL;
 	my_mat->dist = NULL;
 	printf("Format Mega detected<BR>\n");	fflush (stdout);
-	ptr = (char *)strcasestr((const char *)data, "#mega") + 5; /*mega format 1st line begins by keyword mega*/
+	ptr = (char *)strcasestr((const char *)data, "#MEGA") + 5; /*mega format 1st line begins by keyword mega*/
 	if (ptr == NULL)fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
 
-	if (strcasestr ((const char *) ptr, "dataformat") != NULL)
+	if (strcasestr ((const char *) ptr, "DATAFORMAT") != NULL)
 	{
-		if (strcasestr( ptr, "lowerleft") != NULL)
+		if (strcasestr( ptr, "LOWERLEFT") != NULL)
 			lower = 1;
-		else if (strcasestr( ptr, "upperight") != NULL)
+		else if (strcasestr( ptr, "UPPERRIGHT") != NULL)
 			lower = 0;
 		else
 			fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
@@ -1150,14 +1179,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 		fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized"), fclose (fres), exit_properly(ledir);
 
 
-	ptr = strcasestr((const char *)data, "of Taxa :");
+	ptr = strcasestr((const char *)data, "OF TAXA :");
 	if (ptr != NULL)
 		my_mat->n = atol(strchr(ptr, ':') + 1);
 	else
 	{
-		ptr = strcasestr(data, "ntaxa=");
+		ptr = strcasestr(data, "NTAXA=");
 		if (ptr != NULL)
-			my_mat->n = atol(strchr(strcasestr(data, "ntaxa="), '=') + 1);
+			my_mat->n = atol(strchr(strcasestr(data, "NTAXA="), '=') + 1);
 		else
 			fprintf(fres, "ReadMatrixMega_string: Nbr of taxa is not found"), fclose (fres), exit_properly(ledir);
 	}
@@ -1395,14 +1424,14 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 	//fprintf(fres,"read_distmat_string<BR> %d %s",fmega,data),fclose (fres), exit_properly(ledir);
 	fflush(stdout);
 
-	#ifdef _WIN32
+#ifdef _WIN32
 		// Naive solution to replace strcasestr: capitalize everything
 		char *s = data;
 		while (*s) {
 			*s = toupper((unsigned char) *s);
 			s++;
 		}
-	#endif
+#endif
 
 	if (fmega == 5)
 		readMatrixMegaCVS_string(data, &my_mat, ledir, fres);
@@ -1500,7 +1529,9 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 /*------------------------------------------------------*/
 /*  take a fasta file as input and compute distance as method
 	Returns a struct with a distance matrix */
-struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float ts_tv, char *ledir, FILE *fres, int *ll)
+//mat = read_fasta_and_compute_dis(cgivars[ii + 1], imethode, ts_tv, asap_param.ledir, asap_param.fres, &(asap_param.lenSeq));
+
+struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float ts_tv, Parameter *asap_param)
 {
 	struct FastaSeq *mesSeq; /*store all sequences in a struct with name and seq*/
 	char *myseq;
@@ -1511,6 +1542,10 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 	int n = 0, nseq = -1, k = 0, redo = 1, length = 0, nbr = 1, nk;
 	struct DistanceMatrix my_mat;   /* store distance matrix, names and matrix size */
 	int *agarder;
+	char *ledir=asap_param->ledir;
+	FILE *fres=asap_param->fres;
+
+
 	/*some usefull mallocs*/
 
 	mesSeq = malloc(sizeof(struct FastaSeq) * 128);
@@ -1603,7 +1638,8 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 
 	mesSeq[nseq].seq = malloc(sizeof(char) * length + 1);
 	if (!mesSeq[nseq].seq)fprintf(fres, "READFASTA:MEMORY ERROR error can allocate mesSeq[%d].seq\n", nseq), fclose (fres), exit_properly(ledir);
-	*ll = length;
+	//*ll = length;
+	asap_param->lenSeq=length;
 	//copy last seq
 	strncpy(mesSeq[nseq].seq, myseq, length);
 	mesSeq[nseq].seq[length] = '\0';
@@ -1634,7 +1670,7 @@ struct DistanceMatrix  read_fasta_and_compute_dis(char *input, int method, float
 	//for (i=0;i<nseq;i++)
 	//	fprintf(fres,"%s\n<BR>",mesSeq[i].seq);
 
-	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,ledir, fres);
+	my_mat = GetDistMat(nseq, mesSeq, method, ts_tv,*asap_param);
 
 	//clean everything temporaly needed
 	free(myseq);

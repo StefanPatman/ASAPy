@@ -217,7 +217,6 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		asap_param.fres=stderr;
 		asap_param.lenSeq=600;
 
-	// Accept a dictionary-like python object
 	if (!PyArg_ParseTuple(args, "s", &file_data)) return NULL;
 
 	f_in = fopen(file_data, "r");
@@ -255,6 +254,9 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	if (parseItem(dict, "time", 's', &thedate)) return NULL;
 	if (!thedate) thedate = thedate_default;
 	printf("- thedate = %s\n", thedate);
+
+	if (parseItem(dict, "number", 'i', &nbBestAsap)) return NULL;
+	printf("- nbBestAsap = %i\n", nbBestAsap);
 
 	if (parseItem(dict, "method", 'i', &imethode)) return NULL;
 	printf("- imethode = %i\n", imethode);
@@ -316,6 +318,8 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	sprintf(fout, "%sasap.all", dirfiles);
 
 	asap_param.f_out = fopen(fout, "w+");
+	asap_param.fres=stdout;
+	asap_param.web=0;
 	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
 
 	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +11) );
@@ -332,7 +336,8 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	rewind(f_in);
 	if ( c == '>'){
 		fprintf(stderr, "> asap is reading the fasta file and computing the distance matrix\n");
-		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+		// mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),asap_param);
 	}
 	else
 	{
@@ -341,9 +346,19 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 			mat = read_distmat(f_in, ts_tv, NULL, NULL);
 		else
 			if (fmeg==1)
+			{
+				c=fgetc(f_in);
+				fputc(c,f_in);
+
+				if (c==',')
+				{
+					read_mega10(f_in,&mat);printf("done 10\n");
+				}
+				else
 				readMatrixMegaCVS(f_in,&mat);
-			else
-				readMatrixMega(f_in,&mat);
+			}
+		//else
+			//readMatrixMega(f_in,&mat);
 	}
 	fclose(	f_in);
 	fprintf(stderr,"End of matrix distance\n");
@@ -459,7 +474,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	fres = fopen(file_res,"w");
 
 	fprintf(stderr, "> writing scores file\n",asap_param.lenSeq);
-	fprintf(fres, "Best scores (probabilities evaluated with seq length:%d)\n",asap_param.lenSeq);
+	fprintf(fres, "%d Best scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
 	fprintf(fres, "S distance  #species   #spec w/rec  p-value pente score\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
@@ -549,7 +564,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		for (i=0;i<nb_B;i++)
 			o_sp[i]=malloc(sizeof(int)*2);
 		//fprintf(stderr,"go ecrit\n");
-		ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);
+		ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node);
 		//fprintf(stderr,"go order\n");
 		order_spart(o_sp,nb_B,myspar,mat.n);
 		//fprintf(stderr,"go create\n");
