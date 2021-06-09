@@ -577,10 +577,14 @@ class Main(widgets.ToolDialog):
             (fileName, _) = QtWidgets.QFileDialog.getOpenFileName(self,
                 self.title + ' - Open File',
                 str(pathlib.Path.cwd()),
-                'All Files (*)')
+                'All Files (*) ;; Comma Separated Vector files (*.csv)')
         if len(fileName) == 0:
             return
-        core.PartitionAnalysis(fileName)
+        self.analysis = core.PartitionAnalysis(fileName)
+
+        suffix = QtCore.QFileInfo(fileName).suffix()
+        self.analysis.param.general.mega = (suffix == 'csv')
+
         self.paramWidget.setParams(self.analysis.param)
         self.machine.postEvent(utility.NamedEvent('OPEN',file=fileName))
 
