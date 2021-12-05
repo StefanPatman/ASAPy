@@ -144,7 +144,7 @@ switch (nb)
     break;
 
   	case 105:
-	fprintf(f,"Either you have a CVS MEGA matrix and didn't check the option in previous page, <BR>either your matrix is not well formated\n");
+	fprintf(f,"Either you have a CSV MEGA matrix and didn't check the option in previous page, <BR>either your matrix is not well formated\n");
     break;
 
 	case 110:
@@ -1304,7 +1304,7 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 
 
 /*--------------------------------------------------*/
-void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
+void  readMatrixMegaCSV_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
 {
 	int nb = 0, a = 0, b = 0, n = 0;
 	char *pt = data;
@@ -1334,15 +1334,15 @@ void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *
 	my_mat->names = (char **)malloc( (size_t) sizeof(char *) * (my_mat->n + 1) );
 	if ( ! my_mat->names )
 
-		fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
+		fprintf(fres, "readMatrixMegaCSV_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
 
 	my_mat->dist = (double **)malloc( (size_t) sizeof(double *) * (my_mat->n + 1) );
 	if ( ! my_mat->dist )
-		fprintf(fres, "readMatrixMegaCVS_string:read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
+		fprintf(fres, "readMatrixMegaCSV_string:read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
 	for (a = 0; a < my_mat->n; a++) {
 		my_mat->dist[a] = (double *)malloc( (size_t) sizeof(double) * (my_mat->n + 1) );
 		if ( ! my_mat->dist[a] )
-			fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
+			fprintf(fres, "readMatrixMegaCSV_string: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
 	}
 //Now read everything... rewind the string before...
 //printf("%d read<BR>\n",nb);fflush(stdout);
@@ -1387,7 +1387,7 @@ void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *
 			{
 				if (*pt == '?')
 				{
-					fprintf(fres, "readMatrixMegaCVS_string:**Warning distance between %s and %s is unknown,exiting<BR>\n", my_mat->names[a], my_mat->names[b]), fclose (fres), exit_properly(ledir);
+					fprintf(fres, "readMatrixMegaCSV_string:**Warning distance between %s and %s is unknown,exiting<BR>\n", my_mat->names[a], my_mat->names[b]), fclose (fres), exit_properly(ledir);
 				}
 				else
 					sscanf(pt, "%f", &d);
@@ -1435,7 +1435,7 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 #endif
 
 	if (fmega == 5)
-		readMatrixMegaCVS_string(data, &my_mat, ledir, fres);
+		readMatrixMegaCSV_string(data, &my_mat, ledir, fres);
 	//else if (strcasestr((const char *)data, "#mega") != NULL )
 	//	readMatrixMega_string(data, &my_mat, ledir, fres);
 	else /* classic phylip distance matrix*/

@@ -1861,7 +1861,7 @@ else
 }
 
 
-void ecrit_esp_cvs(Node *nodetodraw,int thenode,FILE *f,int sprec,Spart *myspar,int nbind,int round)
+void ecrit_esp_csv(Node *nodetodraw,int thenode,FILE *f,int sprec,Spart *myspar,int nbind,int round)
 {
 int i;
 	if (nodetodraw[thenode].nbdesc==0)
@@ -1873,18 +1873,18 @@ int i;
 	}
 	else
 		for (i=0;i<nodetodraw[thenode].nbdesc;i++ )
-			ecrit_esp_cvs(nodetodraw,nodetodraw[thenode].desc[i], f,sprec,myspar,nbind,round);
+			ecrit_esp_csv(nodetodraw,nodetodraw[thenode].desc[i], f,sprec,myspar,nbind,round);
 }
 
-void ecrit_rec_esp_cvs(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Spart *myspar,int nbind,int round)
+void ecrit_rec_esp_csv(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Spart *myspar,int nbind,int round)
 {
 int l;
 if ((zenodes[nodetodraw].pval> seuil || zenodes[nodetodraw].pval<0)&&(zenodes[nodetodraw].nb_under<=1 ||  nothing_good_under(zenodes,nodetodraw,seuil)))
- 	{	ecrit_esp_cvs(zenodes,nodetodraw,f,*j,myspar,nbind,round);	(*j)++;	}
+ 	{	ecrit_esp_csv(zenodes,nodetodraw,f,*j,myspar,nbind,round);	(*j)++;	}
 else
 	for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
 
-						{ecrit_rec_esp_cvs(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,myspar,nbind,round);		}
+						{ecrit_rec_esp_csv(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,myspar,nbind,round);		}
 }
 
 
@@ -2095,7 +2095,7 @@ for (k=0;k<nbres_tot;k++)
 									scores[k].proba_part[j]=zenodes[aa].pval;
 									ecrit_esp_sous_node(zenodes,aa,f,j+1);
 								//
-									ecrit_esp_cvs(zenodes,aa,f_l,jj,myspar,nbind,rank);
+									ecrit_esp_csv(zenodes,aa,f_l,jj,myspar,nbind,rank);
 									j++;jj++;
 								}
 							}
@@ -2109,7 +2109,7 @@ for (k=0;k<nbres_tot;k++)
 
 								ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores);
 
-								ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
+								ecrit_rec_esp_csv(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
 
 								}
 
@@ -2123,7 +2123,7 @@ for (k=0;k<nbres_tot;k++)
 								scores[k].proba_part[j]=zenodes[nodetodraw].pval;
 						ecrit_esp_sous_node(zenodes,nodetodraw,f,j+1);
 
-						ecrit_esp_cvs(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank);
+						ecrit_esp_csv(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank);
 
 						j++;jj++;
 					}
@@ -2138,7 +2138,7 @@ for (k=0;k<nbres_tot;k++)
 
 							int aa=	zenodes[nodetodraw].desc[l];
 							ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores);
-							ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
+							ecrit_rec_esp_csv(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
 
 						//j++;jj++;
 						}

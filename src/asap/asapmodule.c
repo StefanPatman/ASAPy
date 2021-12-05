@@ -355,7 +355,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 					read_mega10(f_in,&mat);printf("done 10\n");
 				}
 				else
-				readMatrixMegaCVS(f_in,&mat);
+				readMatrixMegaCSV(f_in,&mat);
 			}
 		//else
 			//readMatrixMega(f_in,&mat);

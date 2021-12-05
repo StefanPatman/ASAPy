@@ -87,7 +87,7 @@ void usage(char *arg)
 	\t-h    : this help\n\
 	\t-r #  : nbr of replicates for statistical tests (default is 10^4)\n\
 	\t-b #  : nbr of low-pvalues to be reported (0.001 default)\n\
-	\t-m    : if present the distance Matrix is supposed to be MEGA CVS (other formats than mega are guessed)\n\
+	\t-m    : if present the distance Matrix is supposed to be MEGA CSV (other formats than mega are guessed)\n\
 	\t-a    : output all files: all probabilities, tree and graph files [Better with -o option]\n\
 	\t-d #  : distance (0: Kimura-2P, 1: Jukes-Cantor --default--, 2: Tamura-Nei 3:simple distance)\n\
 	\t-o #  : directory where results files are written (default is where the script is run)\n\
@@ -179,7 +179,7 @@ long ppos;
 //float ff;
 //long posit;
 
-	printf("CVS MEGA X FILE\n");fflush(stdout);
+	printf("CSV MEGA X FILE\n");fflush(stdout);
 
 	ligne=(char *)malloc(sizeof(char)*nbcharmax);
 	*ligne='\0';
@@ -267,7 +267,7 @@ for (a=0;a<my_mat->n;a++){
 		while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 			{letter=fgetc(f_in);}
 		if (feof(f_in) && b!=a)
-			printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
+			printf("%d %d pb reading matrix CSV, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
 
 		}
 /*for (a=0;a<my_mat->n;a++)
@@ -285,8 +285,8 @@ free(ligne);
 
 
 
-/*Read CVS mega matrix which is the default for MEGA 5*/
-void readMatrixMegaCVS(FILE *f_in,struct DistanceMatrix *my_mat)
+/*Read CSV mega matrix which is the default for MEGA 5*/
+void readMatrixMegaCSV(FILE *f_in,struct DistanceMatrix *my_mat)
 {
 int nb=0,a,b,c;
 int nbcharmax=NBCHARMALLOC,to_alloc=0;
@@ -295,7 +295,7 @@ long ppos;
 //float ff;
 //long posit;
 
-	printf("CVS MEGA FILE\n");fflush(stdout);
+	printf("CSV MEGA FILE\n");fflush(stdout);
 
 
 
@@ -380,7 +380,7 @@ for (a=0;a<my_mat->n;a++){
 	while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 		{letter=fgetc(f_in);}
 	if (feof(f_in) && b!=a)
-		printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
+		printf("%d %d pb reading matrix CSV, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
 
 	}
 //for (a=0;a<my_mat->n;a++)
@@ -568,7 +568,7 @@ for (a=0;a<my_mat->n;a++){
 		while (letter != 10  && letter != ']'  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 			{letter=fgetc(f_in);}
 		if (a!=my_mat->n -1 && feof(f_in))
-			printf("pb reading matrix CVS\n"),exit(1);
+			printf("pb reading matrix CSV\n"),exit(1);
 
 	}
 
@@ -724,7 +724,7 @@ struct stat     statbuf;
 
 
 			case 'm':
-				fmeg = 1;			/*if present format mega CVS*/
+				fmeg = 1;			/*if present format mega CSV*/
 				break;
 
 			case 'M':
@@ -836,7 +836,7 @@ struct stat     statbuf;
 						read_mega10(f_in,&mat);printf("done 10\n");
 					}
 					else
-					readMatrixMegaCVS(f_in,&mat);
+					readMatrixMegaCSV(f_in,&mat);
 				}
 			//else
 				//readMatrixMega(f_in,&mat);

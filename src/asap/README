@@ -27,7 +27,7 @@ will give you this help
 	-h    : this help
 		-r #  : nbr of replicates for statistical tests (default is 10^4)
 		-b #  : nbr of best results to be reported (default is 10)
-		-m    : if present the distance Matrix is supposed to be MEGA CVS (other formats are guessed)
+		-m    : if present the distance Matrix is supposed to be MEGA CSV (other formats are guessed)
 		-a    : output all files: all probabilities, tree and graph files (default only graph files and 10 best agglomerations)
 		-d #  : distance (0: Kimura-2P, 1: Jukes-Cantor --default--, 2: Tamura-Nei 3:simple distance)
 		-o #  : NOT WORKING YET existent directory where results files are written (default is same dir than alignment)
@@ -55,7 +55,7 @@ Gascuel O. Molecular Biology and Evolution. 1997 14:685-695
 Two MEGA distance files are read:
 
 *********
-CVS file (default MEGA 5)  formated as follows:
+CSV file (default MEGA 5)  formated as follows:
 [name 1],,
 [name 2],##,,
 ...

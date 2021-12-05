@@ -260,7 +260,7 @@ double unirandom();
 void WriteJSON(FILE *f, struct DistanceMatrix mat,float ecart_max_min,Composante comp);
 void write_javascript_svg(FILE *svgout);
 
-void readMatrixMegaCVS(FILE *f_in,struct DistanceMatrix *my_mat);
+void readMatrixMegaCSV(FILE *f_in,struct DistanceMatrix *my_mat);
 void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat);
 
 #endif

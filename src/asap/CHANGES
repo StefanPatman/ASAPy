@@ -2,6 +2,7 @@ The following changes were made to the original C code (from 2021-04-15):
 
 - Added Python module as `asapmodule.c`: adds a modified version of asap.c/main()
 
+- All mentions of "CVS" were replaced with "CSV"
 - Other source files were also slightly modified:
 
 diff -w ASAP/asap.c ASAPy/src/asapy/c/asap.c
