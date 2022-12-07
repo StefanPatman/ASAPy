@@ -123,7 +123,7 @@ class ScalingImage(QtWidgets.QLabel):
             return
         h = self.height()
         w = h * self._ratio
-        self.setPixmap(self._logo.scaled(w, h,
+        self.setPixmap(self._logo.scaled(int(w), int(h),
             QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 
     def minimumSizeHint(self):
