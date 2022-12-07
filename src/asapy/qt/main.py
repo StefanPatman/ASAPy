@@ -349,6 +349,7 @@ class Main(widgets.ToolDialog):
         self.preview = QtWidgets.QTextEdit()
         self.preview.setFont(
             QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
+        self.preview.setWordWrapMode(0)
         self.preview.setReadOnly(True)
 
         self.graphSvg = QtSvg.QSvgWidget()
@@ -745,7 +746,7 @@ class Main(widgets.ToolDialog):
                 format = QtGui.QTextBlockFormat()
                 # format.setLineHeight(200, QtGui.QTextBlockFormat.ProportionalHeight)
                 # format.setNonBreakableLines(True)
-                format.setTopMargin(10)
+                format.setTopMargin(5)
                 cursor = self.preview.textCursor()
                 cursor.select(QtGui.QTextCursor.Document);
                 cursor.mergeBlockFormat(format);
