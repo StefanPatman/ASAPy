@@ -84,6 +84,10 @@ class ResultView(QtWidgets.QListWidget):
         for file in sorted(list(path.glob('*.spart'))):
             ResultItem(str(path / file), self)
 
+        # spart XML files
+        for file in sorted(list(path.glob('*.spart.xml'))):
+            ResultItem(str(path / file), self)
+
         # partition files (lists)
         for file in sorted(list(path.glob('*.txt'))):
             ResultItem(str(path / file), self)
@@ -261,6 +265,9 @@ class Main(widgets.ToolDialog):
             QtGui.QIcon(widgets.VectorPixmap(':/resources/file-log.svg',
                 colormap=self.colormap_icon))
         ResultItem.Icons['.spart'] = \
+            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-spart.svg',
+                colormap=self.colormap_icon))
+        ResultItem.Icons['.xml'] = \
             QtGui.QIcon(widgets.VectorPixmap(':/resources/file-spart.svg',
                 colormap=self.colormap_icon))
         ResultItem.Icons['.tree'] = \
