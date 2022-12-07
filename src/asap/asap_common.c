@@ -94,7 +94,7 @@ void exit_properly(char *ledir)
 	exit(1);
 	}
 }
-/*--------------------------------------------------*/
+/*-----explor---------------------------------------------*/
 /*COMPARAISON FNS*/
 /*--------------------------------------------------*/
 /*ascending sort on distance*/
@@ -280,7 +280,7 @@ printf("\n**********\n");*/
 			max=myspart[j].specie[i];
 	}
 	//printf("\n--------\n");
-	o_sp[i][1]=i;
+	o_sp[i][1]=i;// keep the original after sorting 0
 	o_sp[i][0]=max;
 }
 /*printf("\n**********\n");
@@ -908,7 +908,7 @@ void nwkOut ( Node *zenodes, FILE *f ,int whichnode)
 
 	if (zenodes[whichnode].nbdesc==0)  {
 
-		fprintf(f,"%s_Group_%d", zenodes[whichnode].name,zenodes[whichnode].specnumber);
+		fprintf(f,"%s_Subset_%d", zenodes[whichnode].name,zenodes[whichnode].specnumber);
 
 
 		//fprintf(f,":%lf",zenodes[whichnode].dist);
@@ -993,7 +993,7 @@ else
 
 
 
-void createSVGhisto(char *ledir,struct DistanceMatrix dist_mat,int nbbids ,Results *scores,int nbresults,char *workdir)
+void createSVGhisto(char *ledir,struct DistanceMatrix dist_mat,int nbbids ,Results *scores,int nbresults,char *workdir,char *file_given)
 {
 int i,j,k;
 int *histo;
@@ -1033,12 +1033,10 @@ int largeur=360;
 	if (histo==NULL)
 	fprintf(stderr,"pb malloc histo(1)\n"),exit(1);
 
-	//histocum=malloc(sizeof(float)*nbcomp+1);
 	nbcum=(dist_mat.n*dist_mat.n-1)/2;
 	histocum=malloc(sizeof(float)*nbcum+1);
 	if (histocum==NULL)
 	fprintf(stderr,"pb malloc histo(2)\n"),exit(1);
-
 	for (i=0;i<nbbids;i++)histo[i]=0;
 
 	k=0;
@@ -1325,16 +1323,13 @@ for (i = nbresults - 1,j=0; i >= 0; i--)
 				}
 	if(scores[i].rank_general<=10)
 			{
-			sprintf(leg, "'inter/intra: %2.2e Nb species: %d / %d [%d groups] dist:%f'", scores[i].other_parameter, scores[i].nbspec, scores[i].nbspecRec, scores[i].nbgroups, scores[i].d);
+			sprintf(leg, "'inter/intra: %2.2e Nb species: %d / %d [%d subsets] dist:%f'", scores[i].other_parameter, scores[i].nbspec, scores[i].nbspecRec, scores[i].nbgroups, scores[i].d);
 
 			c=getCircleColor(scores[i].proba);
-		//	fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", j, x, HAUTEURCOURBE+bord, x, hauteurMax+bord);
-		//fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x, HAUTEURCOURBE+bord, x, hauteurMax+bord);
-			fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x, y, x, hauteurMax+(2*bord));
-		//	fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"red\" />\n", scores[i].rank_general, x_djump, y, x_djump, hauteurMax+(2*bord));
-			 fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"    x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"red\" stroke-dasharray=\"5, 10\"/>\n",scores[i].rank_general, x_djump, y, x_djump, hauteurMax+(2*bord));
-//fprintf(svgout, " <circle id=\"bestScore%d\" onmousemove=\"ShowTooltip(evt, %s)\"   onmouseout=\"HideTooltip(evt)\" onclick=\"circle_click(evt,%d,%f,%d,%d);\" cx=\"%d\" cy=\"%d\" r=\"7\" style=\"fill:%s;stroke:black;\" />\n",
-//				i,leg,j, scores[i].d, scores[i].nbspecRec,scores[i].rank_general, x, y,LavaColors[c]);
+			fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x, y, x, hauteurMax+5+(3*bord));
+			 fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"    x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"red\" stroke-dasharray=\"5, 10\"/>\n",scores[i].rank_general, x_djump, y, x_djump, hauteurMax+5+(3*bord));
+			//fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestline%d\"   x1=\"%d\" y1=\"5\" x2=\"%d\" y2=\"%d\" stroke=\"green\" />\n", scores[i].rank_general, x,  x, hauteurMax+(2*bord));
+			// fprintf(svgout, "    <line   visibility=\"hidden\"  id=\"bestlinejump%d\"    x1=\"%d\" y1=\"5\" x2=\"%d\" y2=\"%d\" stroke=\"red\" stroke-dasharray=\"5, 10\"/>\n",scores[i].rank_general, x_djump,  x_djump, hauteurMax+(2*bord));
 			fprintf(svgout, " <circle id=\"bestScore%d\" onmousemove=\"ShowTooltip(evt, %s)\"   onmouseout=\"HideTooltip(evt)\" onclick=\"circle_click(%d);\" cx=\"%d\" cy=\"%d\" r=\"7\" style=\"fill:%s;stroke:black;\" />\n",
 				i,leg,scores[i].rank_general, x, y,LavaColors[c]);
 			j++;
@@ -1650,9 +1645,9 @@ void draw_clado(Node *zenodes, FILE *fres, int nbnodes, int debut,int largeur)
 		int col = getCircleColor(zenodes[i].pval);
 		if (zenodes[i].to_draw==0) col=4;	//tracer en gris les cerises
 		if (zenodes[i].pval != 1)
-			sprintf(leg, "'Proba: %2.2e dist:%f  nbgroups:%d node:%d nbunder:%d '", zenodes[i].pval, zenodes[i].dist, zenodes[i].nbgroups,i, zenodes[i].nb_under);
+			sprintf(leg, "'Proba: %2.2e dist:%f  nbsubsets:%d node:%d nbunder:%d '", zenodes[i].pval, zenodes[i].dist, zenodes[i].nbgroups,i, zenodes[i].nb_under);
 		else
-			sprintf(leg, "'Proba: NA dist:%f  nbgroups:%d node:%d nb_under:%d'", zenodes[i].dist, zenodes[i].nbgroups,i, zenodes[i].nb_under);
+			sprintf(leg, "'Proba: NA dist:%f  nbsubsets:%d node:%d nb_under:%d'", zenodes[i].dist, zenodes[i].nbgroups,i, zenodes[i].nb_under);
 
 fprintf(fres, "<rect id=\"Pval%d\"  onmousemove=\"ShowTooltip(evt, %s)\"   onmouseout=\"HideTooltip(evt)\"  \
 			onmousedown=\"select_species(evt,%d,%d)\" x=\"%ld\" y=\"%ld\"  width=\"12\" height=\"12\"  style =\"fill:%s;stroke:black\"/> \n",
@@ -1808,86 +1803,99 @@ for (i=0;i<scores[partition].nb_nodes;i++)
 	}
 }
 /*--------------------------------------------------*/
-void ecrit_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,int j)
+void ecrit_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,int j,int to_mem)
 {
 int i;
 	if (zenodes[nodetodraw].nbdesc==0)
-		{fprintf(f,"%s ",zenodes[nodetodraw].name);	zenodes[nodetodraw].specnumber=j;}
+		{
+		if (to_mem==0)
+			fprintf(f,"%s ",zenodes[nodetodraw].name);
+		zenodes[nodetodraw].specnumber=j;
+		}
 	else
 		for (i=0;i<zenodes[nodetodraw].nbdesc;i++ )
-			ecrit_esp_sous_node( zenodes,zenodes[nodetodraw].desc[i], f,j);
+			ecrit_esp_sous_node( zenodes,zenodes[nodetodraw].desc[i], f,j,to_mem);
 }
 
-void find_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
 
-//char *write_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
-{
-int i;
-//printf("ps:%d nb:%d round:%d name:%s\n",sp,nb,round,name);
-
-for (i=0;i<nb;i++)
-{
-	//printf("%s\n",myspar[i].name);
-	if (strcmp(myspar[i].name,name)==0)
-		{
-
-		myspar[i].specie[round]=sp;
-		break;
-		//return(myspar[i].name);
-		}
-	}
-//printf("\n------------------------\n");
-//return("");
-}
-
-void ecrit_rec_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Results *scores)
+/*--------------------------------------------------*/
+void ecrit_rec_esp_sous_node(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Results *scores,int to_mem,int roundz)
 {
 int l;
 
 if ( (zenodes[nodetodraw].pval> seuil|| zenodes[nodetodraw].pval<0) && (zenodes[nodetodraw].nb_under<=1 ||  nothing_good_under(zenodes,nodetodraw,seuil) ))
  	{
- 		scores->proba_part[*j]=zenodes[nodetodraw].pval;
- 		fprintf(f,"\nGroup[ %d ] n: %d ;id: ",(*j)+1,zenodes[nodetodraw].nb_under);
+ 		if (*j>= scores[roundz].nbspecRec)
+ 			printf("round %d // ici pb %d >%d \n",roundz,*j,scores[roundz].nbspecRec);
+ 		scores[roundz].proba_part[*j]=zenodes[nodetodraw].pval;
+ 		if (to_mem==0)
+ 			fprintf(f,"\nSubset[ %d ] n: %d ;id: ",(*j)+1,zenodes[nodetodraw].nb_under);
  		zenodes[nodetodraw].specnumber=*j;
- 		ecrit_esp_sous_node(zenodes,nodetodraw,f,*j);
+ 		ecrit_esp_sous_node(zenodes,nodetodraw,f,*j,to_mem);
  		(*j)++;
  	}
 else
 	for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
+		ecrit_rec_esp_sous_node(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,scores,to_mem,roundz);
+}
+/*--------------------------------------------------*/
+void find_spart_name(char *name,Spart *myspar,int sp,int nb,int round)
+{
+int i;
 
-						{
+for (i=0;i<nb;i++)
+{
+	if (strcmp(myspar[i].name,name)==0)
+		{
 
-							ecrit_rec_esp_sous_node(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,scores);	}
+		myspar[i].specie[round]=sp;
+
+				//myspar[i].group[sp-1]=i;
+		break;
+
+		}
+	}
 }
 
-
-void ecrit_esp_csv(Node *nodetodraw,int thenode,FILE *f,int sprec,Spart *myspar,int nbind,int round)
+/*--------------------------------------------------*/
+void ecrit_esp_cvs(Node *nodetodraw,int thenode,FILE *f,int sprec,Spart *myspar,int nbind,int zround,int to_mem,Results *scores)
 {
 int i;
 	if (nodetodraw[thenode].nbdesc==0)
 	{
-		fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);
-
-		find_spart_name(nodetodraw[thenode].name,myspar,sprec+1,nbind,round);
+	if (to_mem==0)
+		{
+			fprintf(f,"%s , %d \n",nodetodraw[thenode].name,sprec+1);
+		}
+	scores[zround].eff_groups[sprec]++;
+	find_spart_name(nodetodraw[thenode].name,myspar,sprec+1,nbind,zround);
 
 	}
 	else
 		for (i=0;i<nodetodraw[thenode].nbdesc;i++ )
-			ecrit_esp_csv(nodetodraw,nodetodraw[thenode].desc[i], f,sprec,myspar,nbind,round);
+			ecrit_esp_cvs(nodetodraw,nodetodraw[thenode].desc[i], f,sprec,myspar,nbind,zround,to_mem,scores);
 }
 
-void ecrit_rec_esp_csv(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Spart *myspar,int nbind,int round)
+
+/*--------------------------------------------------*/
+void ecrit_rec_esp_cvs(Node *zenodes,int nodetodraw,FILE *f,float seuil,int *j,Spart *myspar,int nbind,int zround,int to_mem,Results *scores)
 {
 int l;
 if ((zenodes[nodetodraw].pval> seuil || zenodes[nodetodraw].pval<0)&&(zenodes[nodetodraw].nb_under<=1 ||  nothing_good_under(zenodes,nodetodraw,seuil)))
- 	{	ecrit_esp_csv(zenodes,nodetodraw,f,*j,myspar,nbind,round);	(*j)++;	}
+ 	{
+ 	ecrit_esp_cvs(zenodes,nodetodraw,f,*j,myspar,nbind,zround,to_mem,scores);
+ 	(*j)++;
+ 	}
 else
 	for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
-
-						{ecrit_rec_esp_csv(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,myspar,nbind,round);		}
+		ecrit_rec_esp_cvs(zenodes,zenodes[nodetodraw].desc[l],f,seuil,j,myspar,nbind,zround,to_mem,scores);
 }
 
 
+
+
+
+/*--------------------------------------------------*/
 char *rewrite_spart(char *old_name)
 {
 char *new_name;
@@ -1905,6 +1913,7 @@ new_name[i]='\0';
 return (new_name);
 }
 
+/*--------------------------------------------------*/
 // part number is given recursively so reorder in a nice view order.
 void change_spart(Spart *myspar,int nbsample, int nb)
 {
@@ -1930,10 +1939,311 @@ void change_spart(Spart *myspar,int nbsample, int nb)
 	}
 
 }
+#define NBCHAR 256
+char *get_line(char *ligne,FILE *f_in,int *nbcharmax)
+{
+char c;
+int nbc=0;
+
+	while (1)
+		{
+		 c=fgetc(f_in);
+		// if (feof(f_in))
+		 //	printf("EOF (1) detected wrong format\n"),exit(1);
+
+		 if (c=='\n'|| c==10 || c=='\r' || feof(f_in)){
+ 			ligne[nbc]='\0';
+
+ 			break;
+ 			}
+ 		ligne[nbc++]=c;
+ 		if (nbc== *nbcharmax)
+ 			{
+ 			*nbcharmax= *(nbcharmax)+NBCHAR;
+ 			ligne=realloc(ligne, sizeof(char)*(*nbcharmax));
+ 			}
+ 		}
+
+
+return(ligne);
+}
+
+
+void print_spart2(Spart *myspar,int nbstepASAP,int nb_ind)
+{
+int i,j;
+FILE *f=fopen("/tmp/spartstruc2.txt","w");
+if (f==NULL) printf("pas ecriture/tmp\n"),exit(1);
+printf("*****opening /tmp/spartstruc.txt\n");
+for (i=0;i<nb_ind;i++)
+{
+fprintf (f,"%s : ",myspar[i].name);
+for (j=0;j<nbstepASAP-1; j++)
+	fprintf (f,"%d " ,myspar[i].specie[j]);
+
+fprintf (f,"%d\n" ,myspar[i].specie[j]);
+}
+fclose (f);
+}
+
+/*--------------------------------------------------*/
+void CreateXMLFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename,FILE *fres,Results *scores,int nbSamples,char *ladate,char *workdir,char *meth,int **order)
+{
+	int i,j,k,nbsubsets,sp;
+	FILE *f;
+	char *names=".spart.xml";
+
+	char lename[512];
+	char *ligne;
+
+	float score;
+	double proba;
+
+	ligne=malloc(sizeof(char)*NBCHAR);
+
+		sprintf(lename,"%s%s/%s%s",workdir,ledir,dataFilename,names);
+
+
+		f=fopen(lename,"w");
+		if (f==NULL) {fprintf(fres,"%s not opened",lename);fclose (fres);exit_properly(ledir);}
+		//printf("------>%s\n",lename);
+		fprintf(f,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		fprintf(f,"<root>\n");
+
+		fprintf(f,"\t<project_name>%s</project_name>\n",dataFilename);
+		fprintf(f,"\t<date>%s</date>\n",ladate);
+		fprintf(f,"\t<!-- WARNING: The sample names below may have been changed to fit SPART specification (only alphanumeric characters and _ ) -->\n");
+    	fprintf(f,"\t<!-- Generated by ASAP with Distance %s -->\n",meth);
+
+		fprintf(f,"\t<individuals>\n");
+		for (i=0;i<nbSamples;i++)
+		fprintf(f,"\t\t<individual id=\"%s\"  />\n",rewrite_spart(myspar[i].name));
+
+		fprintf(f,"\t</individuals>\n\n");
+		//change_spart(myspar,nbSamples, nbstepASAP); //reorder class from 1 to nbsueset
+
+		//(myspar,nbstepASAP,nbSamples);
+		fprintf(f,"\t<spartitions>\n");
+		nbsubsets=0;
+		for (i=0;i<nbstepASAP;i++)
+			{
+			int jj=order[i][1];
+			score=scores[jj].score;
+
+
+			nbsubsets=scores[jj].nbspecRec;
+			fprintf(f,"\t\t<spartition label=\"%s_asap_%d\"  spartitionScore=\"%.1f\" spartitionScoreType=\"Asap-score\" subsetScoreType = \"p-value\"  subsetScoreSource= \"ASAP-%s\"  >\n",
+			dataFilename,
+			i+1,
+
+			scores[i].score,
+
+
+			ladate);
+			fprintf(f,"\t\t<remarks>Rank of spartition: %d</remarks>\n",i+1);
+			fprintf(f,"\t\t<subsets>\n");
+
+
+			nbsubsets=0;
+				//fprintf(f,"\t\t<subset label=\"%d\" score=\"%.2e\" nbind=\"%d\">\n",
+				//		jj+1,scores[j].proba_part[jj],nb_ind_gr);
+			//fprintf(f,"\t\t<subset label=\"%d\"\">\n",nbsubsets+1);
+			sp=0;
+			k=0;
+
+
+
+
+			int sp1=myspar[0].specie[i];
+			for (j=0;j<scores[i].nbspecRec;j++)
+				{
+				proba=scores[i].proba_part[j];
+				//proba=scores[jj].proba_part[j]
+				fprintf(f,"\t\t\t<subset label=\"%d\" ",j+1);
+				if (proba >=0 && proba<1)
+				fprintf(f,"score=\"%1.2e\"",proba);
+				//else
+				//fprintf(f,"?\" ");
+				fprintf(f," >\n");
+				//fprintf(f," nb_ind=\"%d\" >\n",scores[jj].eff_groups[j]);
+				for (;k<nbSamples;k++)
+					{
+					sp=myspar[k].specie[i];
+					if( sp!= sp1)
+						{
+						sp1=sp;
+						break;
+						}
+					fprintf(f,"\t\t\t\t<individual ref=\"%s\" />\n",rewrite_spart(myspar[k].name));
+
+					}
+
+
+
+				//fprintf(f,"\t\t\t\t<individual ref=\"%s\" />\n",rewrite_spart(myspar[k].name));
+				fprintf(f,"\t\t\t</subset>\n");
+				}
+
+			//sp=myspar[i].specie[k];
+			//if( sp!= sp1) //the last is a new subset alone
+			//	{
+			//			fprintf(f,"\t\t</subset>\n");
+			//			fprintf(f,"\t\t<subset label=\"%d\"\">\n",j+1);
+			//	}
+			//fprintf(f,"\t\t\t<individual ref=\"%s\" />\n",rewrite_spart(myspar[k].name));
+			//fprintf(f,"\t\t</subset>\n");
+ 			fprintf(f,"\t\t</subsets>\n");
+ 			fprintf(f,"\t\t</spartition>\n");
+			}//end of one spartition
+
+		fprintf(f,"\t</spartitions>\n");
+	fprintf(f,"</root>\n");
+
+
+
+		fclose(f);
+
+
+
+}
 
 
  //en fait il faut que jai un indice qui me permet decrire le bon spart .. ici cets nbsepcrec qui est OK masi ensuite myspart est rempli
 // ds ordre du meilleur rang et pas du +grd nbre de groupes au plus petit.. faire un tri?
+
+
+
+/*Si tri avant alors spart pas ok sinon debut spart ok mais pas les parts et fichier groups non plus*/
+void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind,int lastnode,char *filename,int to_mem)
+{
+int i,j=0,jj=0,k,l,nb_ok=0,rank;
+FILE *f=NULL;
+FILE *f_l=NULL;
+//FILE *f_nw;
+//FILE *f_sp;
+char nom_fic[1024];
+
+
+j=0;
+
+for (k=0;k<nbres_tot;k++)
+		{
+		if (scores[k].rank_general-1 <=nbres )
+			{
+			rank=scores[k].rank_general-1;
+
+			j=0;jj=0;
+			if (to_mem==0)
+			{
+			sprintf(nom_fic,"%s/%s.Partition_%d.txt",dirfiles,filename,rank+1);
+			f=fopen (nom_fic,"w");
+			sprintf(nom_fic,"%s/%s.Partition_%d.csv",dirfiles,filename,rank+1);
+			f_l=fopen (nom_fic,"w");
+
+			//sprintf(nom_fic,"%s/tree_%d",dirfiles,rank+1);
+			//f_nw=fopen (nom_fic,"w");
+
+			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
+			fprintf(f,"Partition %d \nAsap-Score: %f\nProba: %e\nNb subsets with recursion:%d (without recursion: %d)\n",
+				scores[k].rank_general,scores[k].score,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
+			fprintf(f,"------------------------------------------------------------\n");
+			}
+
+
+			for (i = 0; i <scores[k].nbgroups; i++)
+
+				{
+
+				int nodetodraw=scores[k].listNodes[i];
+
+				if (zenodes[nodetodraw].pval==1 || zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1  )
+
+					{
+					if (zenodes[nodetodraw].dist==scores[k].d) //on est pile poil a lendroit ou il faut casser
+					  {
+						if ( nothing_good_under(zenodes,nodetodraw,seuil)) // aucun groupe directement dessous na une bonne proba on splite juste les groupes
+							{
+							for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //on ecrit direct les groupes aucun ne devra etre splitte
+								{
+
+									int aa=	zenodes[nodetodraw].desc[l];
+									if (to_mem==0)
+										fprintf(f,"\nSubset[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
+									scores[k].proba_part[j]=zenodes[aa].pval;
+									//scores[k].effectif_groupe[j]++;
+									ecrit_esp_sous_node(zenodes,aa,f,j+1,to_mem);
+								//
+									ecrit_esp_cvs(zenodes,aa,f_l,jj,myspar,nbind,rank,to_mem,scores);
+									j++;jj++;
+								}
+							}
+						else // au moins un des nooueds doit etre splitté
+								{
+
+							for (l=0;l<zenodes[nodetodraw].nbdesc;l++)
+								{
+
+								int aa=	zenodes[nodetodraw].desc[l];
+
+								ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores,to_mem,rank);
+
+								ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank,to_mem,scores);
+
+								}
+
+							}
+
+
+						}//NOT PILEPOIL
+					else{
+					if (to_mem==0)
+						fprintf(f,"\nSubset[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
+								scores[k].proba_part[j]=zenodes[nodetodraw].pval;
+									//scores[k].effectif_groupe[j]++;
+						ecrit_esp_sous_node(zenodes,nodetodraw,f,j+1,to_mem);
+
+						ecrit_esp_cvs(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank,to_mem,scores);
+
+						j++;jj++;
+					}
+
+					}// end of simple
+
+				else
+					{
+					//if (vv==1)printf("cas general: %d desc\n",zenodes[nodetodraw].nbdesc);
+					for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
+						{
+
+							int aa=	zenodes[nodetodraw].desc[l];
+							ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores,to_mem,rank);
+							ecrit_rec_esp_cvs(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank,to_mem,scores);
+
+						//j++;jj++;
+						}
+					}
+
+				} //end of i
+			nb_ok++;
+			//nwkOut (zenodes, f_nw ,lastnode);
+			//fprintf(f_nw,";");
+			if (to_mem==0)
+			{
+			fclose(f);
+			fclose(f_l);
+			}
+			//fclose(f_nw);
+			}//end of scorek.
+
+
+			}
+//
+
+
+			//printf("-------\n");
+
+}
+
 
 void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename,FILE *fres,Results *scores,int nbSamples,char *ladate,char *workdir,char *meth,int **order)
 {
@@ -1943,7 +2253,11 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 
 	char lename[512];
 
-		sprintf(lename,"%s%s/asap.spart",workdir,ledir);
+
+
+
+		sprintf(lename,"%s%s/%s%s",workdir,ledir,dataFilename,names);
+
 
 		//fprintf(stderr,"PARTFILE: %s******\n",lename);
 		f=fopen(lename,"w");
@@ -1998,7 +2312,8 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 		if (scores[j].proba_part[k]>=0 && scores[j].proba_part[k]<1)
 		fprintf(f,"%1.2e ;\n",scores[j].proba_part[k]);
 		else
-		fprintf(f," ? ;\n ");
+		fprintf(f," ? ;\n");
+
 		fprintf(f,"[Generated by ASAP with Distance %s ]\n",meth);
 		fprintf(f,"[Asap scores for the N_subset above are:]\n[");
 		for (i=0;i<nbstepASAP-1;i++)
@@ -2009,6 +2324,7 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 		j=order[i][1];
 		fprintf(f," %2.1f ]\n",scores[j].score);
 		fprintf(f,"[WARNING: The sample names below may have been changed to fit SPART specification (only alphanumeric characters and _ )]\n");
+		fprintf(f,"[Subset scores are p-values; see Puillandre et al. 2021 for details of the algorithm]\n");
 
 		fprintf(f,"Individual_assignment = \n");
 		change_spart(myspar,nbSamples, nbstepASAP); //if not the partition number will be the program one and not nice to see
@@ -2017,6 +2333,7 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 		{
 
 			fprintf(f,"%s : ",rewrite_spart(myspar[i].name)); // alea
+
 			for (k=0;k<nbstepASAP-1;k++)
 			{
 				//int h=myspar[i].round;
@@ -2034,134 +2351,23 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 		}
 			j=order[k][1];
 			fprintf(f,"%d;\n",myspar[i].specie[j]);
+					fprintf(f,"end;\n");
 
-		fprintf(f,"end;\n");
+	fprintf(f,"Subset_score_type = ");
+		for (k=0;k<(nbstepASAP-1);k++)
+				fprintf(f,"p-value / ");
+			fprintf(f,"p-value ; \n");
+
+		fprintf(f,"Spartition_score_type = ");
+		for (k=0;k<(nbstepASAP-1);k++)
+				fprintf(f,"Asap-Score / ");
+			fprintf(f," Asap-Score ; \n");
 
 		fclose(f);
 
 
 
 }
-/*Si tri avant alors spart pas ok sinon debut spart ok mais pas les parts et fichier groups non plus*/
-void ecrit_fichier_texte( char *dirfiles,int nbres,int nbres_tot,Node *zenodes,Results *scores,FILE *fres,float seuil, Spart *myspar,int nbind,int lastnode)
-{
-int i,j=0,jj=0,k,l,nb_ok=0,rank;
-FILE *f;
-FILE *f_l;
-FILE *f_nw;
-//FILE *f_sp;
-char nom_fic[1024];
-
-
-j=0;
-
-for (k=0;k<nbres_tot;k++)
-		{
-		if (scores[k].rank_general-1 <=nbres )
-			{
-			rank=scores[k].rank_general-1;
-
-			j=0;jj=0;
-			sprintf(nom_fic,"%s/group_%d.txt",dirfiles,rank+1);
-			f=fopen (nom_fic,"w");
-			sprintf(nom_fic,"%s/group_%d.csv",dirfiles,rank+1);
-			f_l=fopen (nom_fic,"w");
-
-			//sprintf(nom_fic,"%s/tree_%d",dirfiles,rank+1);
-			//f_nw=fopen (nom_fic,"w");
-
-			if (f==NULL){fprintf(fres,"<H1>open text file %s pb\n</H1>",nom_fic);return;}
-			fprintf(f,"Partition %d \nScore: %d\nProba: %e\n nb groups:%d (%d)\n",k+1,scores[k].rank_general,scores[k].proba,scores[k].nbspecRec,scores[k].nbgroups);
-			fprintf(f,"------------------------------------------------------------\n");
-
-			for (i = 0; i <scores[k].nbgroups; i++)
-
-				{
-
-				int nodetodraw=scores[k].listNodes[i];
-
-				if (zenodes[nodetodraw].pval==1 || zenodes[nodetodraw].pval>seuil || zenodes[nodetodraw].nb_under==1  )
-
-					{
-					if (zenodes[nodetodraw].dist==scores[k].d) //on est pile poil a lendroit ou il faut casser
-					  {
-						if ( nothing_good_under(zenodes,nodetodraw,seuil)) // aucun groupe directement dessous na une bonne proba on splite juste les groupes
-							{
-							for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //on ecrit direct les groupes aucun ne devra etre splitte
-								{
-
-									int aa=	zenodes[nodetodraw].desc[l];
-									fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[aa].nb_under);
-									scores[k].proba_part[j]=zenodes[aa].pval;
-									ecrit_esp_sous_node(zenodes,aa,f,j+1);
-								//
-									ecrit_esp_csv(zenodes,aa,f_l,jj,myspar,nbind,rank);
-									j++;jj++;
-								}
-							}
-						else // au moins un des nooueds doit etre splitté
-								{
-
-							for (l=0;l<zenodes[nodetodraw].nbdesc;l++)
-								{
-
-								int aa=	zenodes[nodetodraw].desc[l];
-
-								ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores);
-
-								ecrit_rec_esp_csv(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
-
-								}
-
-							}
-
-
-						}//NOT PILEPOIL
-					else{
-
-						fprintf(f,"\nGroup[ %d ] n: %d ;id: ",j+1,zenodes[nodetodraw].nb_under);
-								scores[k].proba_part[j]=zenodes[nodetodraw].pval;
-						ecrit_esp_sous_node(zenodes,nodetodraw,f,j+1);
-
-						ecrit_esp_csv(zenodes,nodetodraw,f_l,jj,myspar,nbind,rank);
-
-						j++;jj++;
-					}
-
-					}// end of simple
-
-				else
-					{
-					//if (vv==1)printf("cas general: %d desc\n",zenodes[nodetodraw].nbdesc);
-					for (l=0;l<zenodes[nodetodraw].nbdesc;l++) //Ici voir comment on peut dessiner ca recursivement si ya des noeuds dessous a grosse proba
-						{
-
-							int aa=	zenodes[nodetodraw].desc[l];
-							ecrit_rec_esp_sous_node(zenodes,aa,f,seuil,&j,scores);
-							ecrit_rec_esp_csv(zenodes,aa,f_l,seuil,&jj,myspar,nbind,rank);
-
-						//j++;jj++;
-						}
-					}
-
-				} //end of i
-			nb_ok++;
-			//nwkOut (zenodes, f_nw ,lastnode);
-			//fprintf(f_nw,";");
-			fclose(f);
-			fclose(f_l);
-			//fclose(f_nw);
-			}//end of scorek.
-
-
-			}
-//
-			//printf("-------\n");
-
-}
-
-
-
 
 /*--------------------------------------------------*/
 /*Draw the groups the way Nico wants it...*/
@@ -2224,16 +2430,17 @@ for (i = 0; i < nbspecies; i++)
 //int flag=0;
 j=0;
 x=0;
-fprintf (fgroups,"<text x=\"10\" y=\"10\" style=\"color:black;font-size :12;font-family = monospace;\">Nb groups </text>\n");
-fprintf (fgroups,"<text x=\"10\" y=\"25\" style=\"color:black;font-size :12;font-family = monospace;\">Score</text>\n");
+fprintf (fgroups,"<text x=\"10\" y=\"10\" style=\"color:black;font-size :12;font-family = monospace;\">Nb subsets/asap score</text>\n");
+fprintf (fgroups,"<text x=\"10\" y=\"25\" style=\"color:black;font-size :12;font-family = monospace;\">Rank</text>\n");
+
 for (k=0;k<nresult;k++)
 		if (scores[k].rank_general<=nbest )
 		{
 			//int col=0;
 			//if (scores[k].rank_general==3)flag=1;else flag=0;
 			x=	largeur_species+(50*j)+marge;
-			fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :12px;font-family = monospace;\" >[%d] </text>\n",x ,SIZEOFTEXT/2,scores[k].nbspecRec);
-			fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :10px;font-family = monospace;\" >[%.1f] </text>\n",x ,SIZEOFTEXT+2,scores[k].score);
+			fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :12px;font-family = monospace;\" >[%d/%.1f] </text>\n",x ,SIZEOFTEXT/2,scores[k].nbspecRec,scores[k].score);
+			fprintf(fgroups,"<text x=\"%ld\" y=\"%d\"   style=\"color:black;font-size :10px;font-family = monospace;\" >[%d] </text>\n",x ,SIZEOFTEXT+2,scores[k].rank_general);
 
 			for (i = 0; i <scores[k].nbgroups; i++)
 				{

@@ -92,9 +92,9 @@ void svgCircleJS2(  FILE *svgout,int x1,int y1,int r, char *color,double d,doubl
   fprintf(svgout, " <circle onclick=\"circle_proba(evt,%f,%f)\" cx=\"%d\" cy=\"%d\" r=\"%d\" fill=\"%s\" />\n",d,p,x1,y1,r,color);
 	}
 
-void svgImageSetPixel(FILE *svgout, int x1, int y1, char *color)
+void svgImageSetPixel(FILE *svgout, int x1, int y1, char *color) 
 {
-		svgFilledRectangle(svgout, x1, y1, 1, 1,color)	;
+		svgFilledRectangle(svgout, x1, y1, 1, 1,color)	;			
 }
 
 void svgDashedLine(FILE *svgout, int x1, int y1, int x2, int  y2,char *color)
@@ -104,3 +104,4 @@ void svgDashedLine(FILE *svgout, int x1, int y1, int x2, int  y2,char *color)
 
 
  }
+ 

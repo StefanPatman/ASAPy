@@ -14,7 +14,7 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 void free_distmat(  struct DistanceMatrix mat );
 void transition_transversion_sequences(char *seq1, char *seq2, long L, long *tsi, long *tsv);
 void readMatrixMega_string(char *data,struct DistanceMatrix *my_mat,char *ledir,FILE *fres);
-void readMatrixMegaCSV_string(char *data,struct DistanceMatrix *my_mat,char *ledir,FILE *fres);
+void readMatrixMegaCVS_string(char *data,struct DistanceMatrix *my_mat,char *ledir,FILE *fres);
 void remplace(char *name,char c,char newc);
 
 int check_names(struct FastaSeq *mesSeq, int nbseq,char *ledir,FILE *fres);
@@ -42,5 +42,7 @@ double Q_given_t_R( double t, double R );
 double compute_logL_given_t_R( long nsites, long n_tsv, long n_tsi, double t, double R );
 double compute_k80( long nsites, long n_tsv, long n_tsi );
 double find_ML_t_given_R( double R, long nsites, long n_tsv, long n_tsi );
+
+
 
 #endif

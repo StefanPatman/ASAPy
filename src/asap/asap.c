@@ -87,8 +87,9 @@ void usage(char *arg)
 	\t-h    : this help\n\
 	\t-r #  : nbr of replicates for statistical tests (default is 10^4)\n\
 	\t-b #  : nbr of low-pvalues to be reported (0.001 default)\n\
-	\t-m    : if present the distance Matrix is supposed to be MEGA CSV (other formats than mega are guessed)\n\
+	\t-m    : if present the distance Matrix is supposed to be MEGA CVS (other formats than mega are guessed)\n\
 	\t-a    : output all files: all probabilities, tree and graph files [Better with -o option]\n\
+	\t-u    : output ONLY spart file\n\
 	\t-d #  : distance (0: Kimura-2P, 1: Jukes-Cantor --default--, 2: Tamura-Nei 3:simple distance)\n\
 	\t-o #  : directory where results files are written (default is where the script is run)\n\
 	\t-l #	: original length of seqs if a distance matrix was provided (default value 600)\n\
@@ -179,7 +180,7 @@ long ppos;
 //float ff;
 //long posit;
 
-	printf("CSV MEGA X FILE\n");fflush(stdout);
+	printf("CVS MEGA X FILE\n");fflush(stdout);
 
 	ligne=(char *)malloc(sizeof(char)*nbcharmax);
 	*ligne='\0';
@@ -193,7 +194,7 @@ long ppos;
 			nb++;
 
 	nb=nb+1;
-	printf("%ld seq\n",nb);fflush(stdout);
+	printf("%d seq\n",nb);fflush(stdout);
 
 	my_mat->n = nb;
 
@@ -267,7 +268,7 @@ for (a=0;a<my_mat->n;a++){
 		while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 			{letter=fgetc(f_in);}
 		if (feof(f_in) && b!=a)
-			printf("%d %d pb reading matrix CSV, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
+			printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
 
 		}
 /*for (a=0;a<my_mat->n;a++)
@@ -285,8 +286,8 @@ free(ligne);
 
 
 
-/*Read CSV mega matrix which is the default for MEGA 5*/
-void readMatrixMegaCSV(FILE *f_in,struct DistanceMatrix *my_mat)
+/*Read CVS mega matrix which is the default for MEGA 5*/
+void readMatrixMegaCVS(FILE *f_in,struct DistanceMatrix *my_mat)
 {
 int nb=0,a,b,c;
 int nbcharmax=NBCHARMALLOC,to_alloc=0;
@@ -295,7 +296,7 @@ long ppos;
 //float ff;
 //long posit;
 
-	printf("CSV MEGA FILE\n");fflush(stdout);
+	printf("CVS MEGA FILE\n");fflush(stdout);
 
 
 
@@ -380,7 +381,7 @@ for (a=0;a<my_mat->n;a++){
 	while (letter != 10  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 		{letter=fgetc(f_in);}
 	if (feof(f_in) && b!=a)
-		printf("%d %d pb reading matrix CSV, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
+		printf("%d %d pb reading matrix CVS, asap only reads MEGA 6 or MEGA X csv format\n",a,b),exit(1);
 
 	}
 //for (a=0;a<my_mat->n;a++)
@@ -429,18 +430,18 @@ void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat)
 
 			if (feof(f_in)) printf("pb reading file...\n"),exit(1);
 
-		 	if (strcasestr(ligne," OF TAXA :") != NULL)
+		 	if (strcasestr(ligne," of Taxa :") != NULL)
 				my_mat->n=atoi(strchr(ligne,':')+1);
 
-			if (strcasestr(ligne,"NTAXA=") !=NULL)
-				my_mat->n=atoi(strchr(strcasestr(ligne,"NTAXA="),'=')+1);
+			if (strcasestr(ligne,"NTaxa=") !=NULL)
+				my_mat->n=atoi(strchr(strcasestr(ligne,"NTaxa="),'=')+1);
 
-			if (strcasestr(ligne,"DATAFORMAT=")!=NULL)
+			if (strcasestr(ligne,"DataFormat=")!=NULL)
 				{
-				if (strcasestr(ligne,"LOWERLEFT")!=NULL)
+				if (strcasestr(ligne,"Lowerleft")!=NULL)
 					lower=1;
 				else
-					if (strcasestr(ligne,"UPPERRIGHT")!=NULL)
+					if (strcasestr(ligne,"upperright")!=NULL)
 						lower=0;
 					else
 					printf("Unknown data format\n"),exit(1);
@@ -568,7 +569,7 @@ for (a=0;a<my_mat->n;a++){
 		while (letter != 10  && letter != ']'  && letter!=13 && letter !='\n'&& !feof(f_in))/* go to end of line*/
 			{letter=fgetc(f_in);}
 		if (a!=my_mat->n -1 && feof(f_in))
-			printf("pb reading matrix CSV\n"),exit(1);
+			printf("pb reading matrix CVS\n"),exit(1);
 
 	}
 
@@ -577,10 +578,28 @@ for (a=0;a<my_mat->n;a++){
 
 }
 
+/*
+void print_spart(Spart *myspar,int nbstepASAP,int nb_ind)
+{
+int i,j;
+FILE *f=fopen("/tmp/spartstruc.txt","w");
+if (f==NULL) printf("pas ecriture/tmp\n"),exit(1);
+printf("*****opening /tmp/spartstruc.txt\n");
+for (i=0;i<nb_ind;i++)
+{
+fprintf (f,"%s : ",myspar[i].name);
+for (j=0;j<nbstepASAP-1; j++)
+	fprintf (f,"%d " ,myspar[i].specie[j]);
 
+fprintf (f,"%d\n" ,myspar[i].specie[j]);
+}
+fclose (f);
+}
+*/
 
 
 /*--------------------------------------------------*/
+
 #ifndef ismodule
 
 int main(int argc, char**argv)
@@ -637,6 +656,7 @@ Spart *myspar;
 	      min,
 	      ts_tv = 2.0;     /* default value for the trans/transv rates for Kimura 2-p */
 	int nbBestAsap=10;
+
 	double best_score, echx, echy,max_score,min_score;
 
 	int widthKlado;
@@ -670,6 +690,7 @@ struct stat     statbuf;
 	//asap_param.ledir="";
 	asap_param.fres=stderr;
 	asap_param.lenSeq=600;
+	asap_param.onlyspart=0;
 	/*
 		Header
 	*/
@@ -683,7 +704,7 @@ struct stat     statbuf;
 	/*
 		parse options
 	*/
-	while ( (c = getopt(argc, argv, "o:l:n:p:d:amhr:b:")) != -1 ) {
+	while ( (c = getopt(argc, argv, "o:l:n:p:d:amuhr:b:")) != -1 ) {
 
 		switch (c) {
 			case 'a':
@@ -724,7 +745,7 @@ struct stat     statbuf;
 
 
 			case 'm':
-				fmeg = 1;			/*if present format mega CSV*/
+				fmeg = 1;			/*if present format mega CVS*/
 				break;
 
 			case 'M':
@@ -746,6 +767,11 @@ struct stat     statbuf;
 
 			case 'x':
 				seed_asap=atoi(optarg); /* give a seed */
+
+			case 'u':
+				asap_param.onlyspart=1	;		/*if present One spart fiel only is outputedCVS*/
+				break;
+
 
 			default:
 				usage(argv[0]);
@@ -793,20 +819,23 @@ struct stat     statbuf;
 	if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
 
 	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + strlen (simple_name) +20)));
-	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);
+	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);//for box graphic
 	sprintf(fout, "%s%s.all", dirfiles, simple_name);
-
-	asap_param.f_out = fopen(fout, "w+");
+	if (asap_param.onlyspart==0)
+		{
+		asap_param.f_out = fopen(fout, "w+");
+		if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
+		}
 	asap_param.fres=stdout;
 	asap_param.web=0;
-	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
 
 	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
-	sprintf(fname, "%s%s.svg", dirfiles, simple_name);
-
+	sprintf(fname, "%s%s.svg", dirfiles, simple_name);// for main graphic results
+	if (asap_param.onlyspart==0)
+		{
 	svgout = fopen(fname, "w");
 	if (svgout == NULL)fprintf(stderr, "cannot open the graphic output file %s, bye\n", fname), exit(1);
-
+		}
 
 	/*
 		Read or build the distance matrix
@@ -836,7 +865,7 @@ struct stat     statbuf;
 						read_mega10(f_in,&mat);printf("done 10\n");
 					}
 					else
-					readMatrixMegaCSV(f_in,&mat);
+					readMatrixMegaCVS(f_in,&mat);
 				}
 			//else
 				//readMatrixMega(f_in,&mat);
@@ -929,7 +958,7 @@ for (i=0;i<mat.n;i++)
 	//nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo, nb_pairs, f_out, &best_score, &firstpart, stderr, zenodes, no_node, &last_node, "", len_seq, replicates,seuil_pvalue,pond_pente);
 	nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo,  &best_score, &firstpart,  zenodes, no_node, &last_node,asap_param);
 
-
+fprintf(stderr,"> asap has finished building and testing all partitions\n  ");
 		/*if (fdeb!=NULL)
 		{
 		fprintf(fdeb,"%d res\n",nbresults);
@@ -963,8 +992,8 @@ for (i=0;i<mat.n;i++)
 		scores[i].rank_general=i+1;
 
 
-	fprintf(stderr, "\n> %d Best scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
-	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente score\n");
+	fprintf(stderr, "\n> %d Best asap scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
+	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente asap-score\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
 
@@ -987,23 +1016,28 @@ for (i=0;i<mat.n;i++)
 	/*if (withallfiles)
 		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 	ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);*/
-	printf("creating histo in %s\n",dirfiles);
+	//printf("creating histo in %s\n",dirfiles);
 	//createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
-	createSVGhisto(dirfiles,mat,20,scores, nbresults,"");
+	if (asap_param.onlyspart==0)
+	createSVGhisto(dirfiles,mat,20,scores, nbresults,"",simple_name);
 
 	/*
 		That
 	*/
-
+	if (asap_param.onlyspart==0)
 	fprintf(stderr, "> asap is creating text and graphical output\n");
+	else
+		fprintf(stderr, "> asap is creating spart output\n");
 	qsort(scores,nbresults,sizeof (Results ),compareSpecies);
 
-
+if (asap_param.onlyspart==0)
+	{
 	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
 	fprintf(svgout, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
 
 
 	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
+	}
 	clearalltab(strucompo, &comp, mat.n);
 
 
@@ -1011,21 +1045,29 @@ for (i=0;i<mat.n;i++)
 	echy = mat.n * SIZEOFTEXT;
 	echx = widthKlado / (float)maxDist;
 
+
 	print_clado(zenodes, last_node, NULL, echx, echy, (widthKlado - 100) / zenodes[last_node].round, 0,0);
 
+if (asap_param.onlyspart==0)
 	draw_clado(zenodes, svgout, last_node, mat.n,widthKlado);
 
 	color_clado(zenodes, last_node,&color_ori);
 
-
+if (asap_param.onlyspart==0)
+	{
 	fprintf(svgout, "</svg>\n");
 	fclose(svgout);
-	fgroups=fopen(namegroups,"w");
-	if (fgroups==NULL)
-	printf("Cant write %s\n",namegroups);
-	else
-	draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
+	}
+
+	if (asap_param.onlyspart==0)
+	{
+		fgroups=fopen(namegroups,"w");
+		if (fgroups==NULL)
+		printf("Cant write %s\n",namegroups);
+		else
+		draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
 //printf("write \n");
+	}
 	for (i=0;i<mat.n;i++)
 		{
 			int n=zenodes[i].first_to_draw; //assign ed in print_clado
@@ -1034,13 +1076,12 @@ for (i=0;i<mat.n;i++)
 			strcpy(myspar[n].name,mat.names[i]);
 			//printf("i:%d %d %s %s\n",i,n,myspar[n].name,mat.names[i]);
 			myspar[i].specie=malloc(sizeof(int)* nb_B+1);
-
+			//myspar[i].specie_ori=malloc(sizeof(int)* nb_B+1);
+			//myspar[i].group=malloc(sizeof(int)*(n+1));
 		}
 		/*for (i=0;i<mat.n;i++)
 		printf("i:%d %s\n",i,myspar[i].name);*/
 	//qsort(scores,nbresults,sizeof (Results ),compareRang);
-if (withallfiles)
-{
 	int **o_sp;
 		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 	qsort(scores,nbresults,sizeof (Results ),compareRang);
@@ -1049,26 +1090,48 @@ if (withallfiles)
 	o_sp=malloc(sizeof(int*)*nb_B);
 	for (i=0;i<nb_B;i++)
 		o_sp[i]=malloc(sizeof(int)*2);
-	//fprintf(stderr,"go ecrit\n");
-	ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node);
+	//fprintf(stderr,"go ecrit %d %d\n",nb_B,nbresults);
+
+		ecrit_fichier_texte( dirfiles,nb_B-1,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node,simple_name,asap_param.onlyspart);
+
 	//fprintf(stderr,"go order\n");
 	order_spart(o_sp,nb_B,myspar,mat.n);
 	//fprintf(stderr,"go create\n");
+	/*for (i=0;i<10;i++)
+	{
+	printf("%d (%d)---> ",scores[i].nbspecRec,scores[i].rank_general);
+	int k;
+	for (k=0;k<scores[i].nbspecRec;k++)
+	printf("%2d ", scores[i].eff_groups[k]);
+	printf("\n");
+	}*/
 	CreateSpartFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
+	//fprintf(stderr,"go print_Spart\n");
+	//print_spart(myspar,nb_B,mat.n);
+	CreateXMLFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
+
 	for (i=0;i<nb_B;i++)
 		free(o_sp[i]);
 	free(o_sp);
-}
+
 	fprintf(stderr, "> results were write \n");
 
 	t5 = time(NULL);
 
 	resetcomp(&comp, mat.n);
+
 	fprintf(stderr, "  partition results are logged in: \n");
+
+
+	if (asap_param.onlyspart==0)
+	{
 	fprintf(stderr, "\tFull results: %s\n",fout);
-	fprintf(stderr, "\tThe csv file of rank x: %sgroupe_x\n",dirfiles);
-	fprintf(stderr, "\tThe result file of rank x: %sgroup_x\n",dirfiles);
+	fprintf(stderr, "\tThe rank below is given by asap_score\n");
+	fprintf(stderr, "\tThe csv file of rank x: %sPartition_x\n",dirfiles);
+	fprintf(stderr, "\tThe result file of rank x: %sPartition_x\n",dirfiles);
 	fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
+	fprintf(stderr, "\tXML spart file is: %s%s.spart.xml\n", dirfiles,simple_name);
+	}
 	fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
 
 	free (fout);

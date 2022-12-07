@@ -216,6 +216,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		//asap_param.ledir="";
 		asap_param.fres=stderr;
 		asap_param.lenSeq=600;
+		asap_param.onlyspart=0;
 
 	if (!PyArg_ParseTuple(args, "s", &file_data)) return NULL;
 
@@ -355,7 +356,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 					read_mega10(f_in,&mat);printf("done 10\n");
 				}
 				else
-				readMatrixMegaCSV(f_in,&mat);
+				readMatrixMegaCVS(f_in,&mat);
 			}
 		//else
 			//readMatrixMega(f_in,&mat);
@@ -443,6 +444,15 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	//nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo, nb_pairs, f_out, &best_score, &firstpart, stderr, zenodes, no_node, &last_node, "", len_seq, replicates,seuil_pvalue,pond_pente);
 	nbresults = do_agglutine( mat, &comp, ListDistance, scores, strucompo,  &best_score, &firstpart,  zenodes, no_node, &last_node,asap_param);
 
+fprintf(stderr,"> asap has finished building and testing all partitions\n  ");
+		/*if (fdeb!=NULL)
+		{
+		fprintf(fdeb,"%d res\n",nbresults);
+		for (i=0;i<nbresults;i++)
+			fprintf(fdeb,"%d %d %d\n",i,scores[i].nbspec,scores[i].nbspecRec);
+		fclose (fdeb);
+	}*/
+
 	qsort(scores,nbresults,sizeof (Results ),compareProba);
 	for (i = 0; i < nbresults+1; i++)
 		scores[i].rank_proba=i+1;
@@ -474,8 +484,8 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	fres = fopen(file_res,"w");
 
 	fprintf(stderr, "> writing scores file\n",asap_param.lenSeq);
-	fprintf(fres, "%d Best scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
-	fprintf(fres, "S distance  #species   #spec w/rec  p-value pente score\n");
+	fprintf(fres, "\n> %d Best asap scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
+	fprintf(fres, "  distance  #species   #spec w/rec  p-value pente asap-score\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
 	for (i = 0; i < nb_B; i++)
 
@@ -499,23 +509,28 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	/*if (withallfiles)
 		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 	ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n);*/
-	printf("creating histo in %s\n",dirfiles);
+	//printf("creating histo in %s\n",dirfiles);
 	//createSVGhisto(dirfiles,mat,20,scores, nbresults,WORKDIR_CL);
-	createSVGhisto(dirfiles,mat,20,scores, nbresults,"");
+	if (asap_param.onlyspart==0)
+		createSVGhisto(dirfiles,mat,20,scores, nbresults,"",simple_name);
 
 	/*
 		That
 	*/
-
+	if (asap_param.onlyspart==0)
 	fprintf(stderr, "> asap is creating text and graphical output\n");
+	else
+		fprintf(stderr, "> asap is creating spart output\n");
 	qsort(scores,nbresults,sizeof (Results ),compareSpecies);
 
-
+if (asap_param.onlyspart==0)
+	{
 	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
 	fprintf(svgout, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
 
 
 	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
+	}
 	clearalltab(strucompo, &comp, mat.n);
 
 
@@ -548,7 +563,8 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 				strcpy(myspar[n].name,mat.names[i]);
 				//printf("i:%d %d %s %s\n",i,n,myspar[n].name,mat.names[i]);
 				myspar[i].specie=malloc(sizeof(int)* nb_B+1);
-
+				//myspar[i].specie_ori=malloc(sizeof(int)* nb_B+1);
+				//myspar[i].group=malloc(sizeof(int)*(n+1));
 			}
 			/*for (i=0;i<mat.n;i++)
 			printf("i:%d %s\n",i,myspar[i].name);*/
@@ -564,11 +580,14 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		for (i=0;i<nb_B;i++)
 			o_sp[i]=malloc(sizeof(int)*2);
 		//fprintf(stderr,"go ecrit\n");
-		ecrit_fichier_texte( dirfiles,nb_B,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node);
+		ecrit_fichier_texte( dirfiles,nb_B-1,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node,simple_name,asap_param.onlyspart);
 		//fprintf(stderr,"go order\n");
 		order_spart(o_sp,nb_B,myspar,mat.n);
 		//fprintf(stderr,"go create\n");
 		CreateSpartFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
+		//fprintf(stderr,"go print_Spart\n");
+		//print_spart(myspar,nb_B,mat.n);
+		CreateXMLFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
 		for (i=0;i<nb_B;i++)
 			free(o_sp[i]);
 		free(o_sp);

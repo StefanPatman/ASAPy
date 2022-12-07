@@ -144,7 +144,7 @@ switch (nb)
     break;
 
   	case 105:
-	fprintf(f,"Either you have a CSV MEGA matrix and didn't check the option in previous page, <BR>either your matrix is not well formated\n");
+	fprintf(f,"Either you have a CVS MEGA matrix and didn't check the option in previous page, <BR>either your matrix is not well formated (asap supports CVS MEGA v 6 and X )\n");
     break;
 
 	case 110:
@@ -178,7 +178,7 @@ switch (nb)
 
     case 344:
 
-   fprintf(f,"MEGA CSV distance file not well formated. Please resave your file with MEGA\n");
+   fprintf(f,"MEGA CSV distance file not well formated. ASAP can only read MEGA6 and MEGAX CSV files Please resave your file with MEGA\n");
     break;
 
     case 343:
@@ -195,7 +195,7 @@ fclose (f), exit_properly(ledir);
 
  }
 
-int myclose(Parameter asap_param)
+void myclose(Parameter asap_param)
 {
 	if (asap_param.web==1)
 		{fclose (asap_param.fres); exit_properly(asap_param.ledir);}
@@ -663,8 +663,6 @@ void clean_str(char *ch)
 /*--------------------------------------------*/
 void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FILE *f2, char *ledir,FILE *fres) {
 
-#ifndef _WIN32
-
 	int i, j, k = 0, ng = 1;
 	char nom[100], *bou;
 	char chiffre[10];
@@ -684,7 +682,7 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 			{fprintf(fres, "ERROR: debug is %s cant be find in \n%s \n", nom, lastring); f_html_error(888,ledir,fres);}
 			bou += strlen(nom) + 1;
 			sprintf(chiffre, "%d", ng);
-			*bou++ = '|'; *bou++ = 'g'; *bou++ = 'r'; *bou++ = 'o'; *bou++ = 'u'; *bou++ = 'p'; *bou++ = ' ';
+			*bou++ = '|'; *bou++ = 'S'; *bou++ = 'u'; *bou++ = 'b'; *bou++ = 's'; *bou++ = 'e'; *bou++ = 't';*bou++ = ' ';
 			for (k = 0; k < strlen(chiffre); k++)*bou++ = chiffre[k];
 
 		}
@@ -695,7 +693,6 @@ void print_groups_newick( Composante my_comp, DistMat mat  , char *lastring, FIL
 	clean_str(lastring);
 	fprintf(f2, "%s\n", lastring);
 
-#endif
 
 }
 
@@ -954,7 +951,7 @@ void distanceK80 (struct FastaSeq *mesSeqs, int l, struct  DistanceMatrix  my_ma
 	long del;
 	int nseq = my_mat.n;
 	double h;
-char *ledir=asap_param.ledir;
+//char *ledir=asap_param.ledir;
 FILE *fres=asap_param.fres;
 	for (i = 0; i < nseq; i++) {
 
@@ -1086,7 +1083,7 @@ FILE *fres=asap_param.fres;
 struct DistanceMatrix GetDistMat(int nseq, struct FastaSeq *mesSeqs, int method, float ts_tv, Parameter asap_param)
 {
 
-char *ledir=asap_param.ledir;
+//char *ledir=asap_param.ledir;
 FILE *fres=asap_param.fres;
 	struct DistanceMatrix my_mat;                  /* store distance matrix, names and matrix size */
 	void (*distance) (struct FastaSeq *, int , struct DistanceMatrix ,Parameter asap_param) = NULL;      /* pointeur de fonction */;
@@ -1148,7 +1145,8 @@ FILE *fres=asap_param.fres;
 }
 
 /*--------------------------------------------------*/
-void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres) {
+/*void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
+{
 
 	int a;
 	int nbc = 0;
@@ -1164,14 +1162,14 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 	my_mat->names = NULL;
 	my_mat->dist = NULL;
 	printf("Format Mega detected<BR>\n");	fflush (stdout);
-	ptr = (char *)strcasestr((const char *)data, "#MEGA") + 5; /*mega format 1st line begins by keyword mega*/
+	ptr = (char *)strcasestr((const char *)data, "#mega") + 5; //mega format 1st line begins by keyword mega
 	if (ptr == NULL)fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
 
-	if (strcasestr ((const char *) ptr, "DATAFORMAT") != NULL)
+	if (strcasestr ((const char *) ptr, "dataformat") != NULL)
 	{
-		if (strcasestr( ptr, "LOWERLEFT") != NULL)
+		if (strcasestr( ptr, "lowerleft") != NULL)
 			lower = 1;
-		else if (strcasestr( ptr, "UPPERRIGHT") != NULL)
+		else if (strcasestr( ptr, "upperight") != NULL)
 			lower = 0;
 		else
 			fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized "), fclose (fres), exit_properly(ledir);
@@ -1180,25 +1178,21 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 		fprintf(fres, "ReadMatrixMega_string: your matrice is not recognized"), fclose (fres), exit_properly(ledir);
 
 
-	ptr = strcasestr((const char *)data, "OF TAXA :");
+	ptr = strcasestr((const char *)data, "of Taxa :");
 	if (ptr != NULL)
 		my_mat->n = atol(strchr(ptr, ':') + 1);
 	else
 	{
-		ptr = strcasestr(data, "NTAXA=");
+		ptr = strcasestr(data, "ntaxa=");
 		if (ptr != NULL)
-			my_mat->n = atol(strchr(strcasestr(data, "NTAXA="), '=') + 1);
+			my_mat->n = atol(strchr(strcasestr(data, "ntaxa="), '=') + 1);
 		else
 			fprintf(fres, "ReadMatrixMega_string: Nbr of taxa is not found"), fclose (fres), exit_properly(ledir);
 	}
 
 	my_mat->names = (char **)malloc( (size_t) sizeof(char *)* my_mat->n + 1 );
 	if ( ! my_mat->names )fprintf(fres, "ReadMatrixMega_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
-	/*	for(a=0;a<my_mat->n; a++){
-			my_mat->names[a] = (char *)malloc( (size_t) sizeof(char)*SIZE_NAME_DIST+1 );
-			if( ! my_mat->names[a] )
-				printf( "read_distmat: cannot allocate my_mat.names[%d], bye<BR>",a), exit(4);
-		}*/
+
 
 	my_mat->dist = (double **)malloc( (size_t) sizeof(double *)*my_mat->n + 1 );
 	if ( ! my_mat->dist )fprintf(fres, "ReadMatrixMega_string: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
@@ -1299,26 +1293,25 @@ void readMatrixMega_string(char *data, struct DistanceMatrix *my_mat, char *ledi
 //printf("%d<BR>\n",my_mat->n);
 //printf("il est temps que ca se termine\n<BR>");	fflush (stdout);
 
-}
+}*/
 
-
-
-/*--------------------------------------------------*/
-void  readMatrixMegaCSV_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
+/************************************/
+void  readMatrixMega10CVS_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
 {
+
 	int nb = 0, a = 0, b = 0, n = 0;
 	char *pt = data;
 	char *p, *ll;
 
 	float d;
-	//fprintf(fres," MEGA 5 format CSV detected. <BR>\n");
-	fflush(stdout);
-	while (strncmp(pt, "Table", 5) != 0 && *pt != '\0') //hoping that keyword Table is the end of the matrix
-	{
+	//fprintf(fres," MEGA X format CSV detected. <BR>\n");
 
-		if (*pt == '\n' && ( (*(pt + 1) == '\r') || (*(pt + 1) == 10) || (*(pt + 1) == 13) ) ) if (nb != 0) break;
-		if (*pt == '\n' && isalnum(*(pt + 1))) {nb++;  }
-		//if (*pt == '[') {nb++;  }
+
+	while  (*pt != 10 &&*pt!=13&& *pt!='\n' && *pt!='\0')
+	{
+		//fprintf(fres,"%d %c<BR>",*pt, *pt);
+		if (*pt == ',') {nb++;  }
+		//f (*pt == ',') {fprintf(fres,"%d<BR>",nb);if (nb> 280) fclose (fres), exit_properly(ledir)}
 //	if (*pt=='\n') printf("***RC %d %d<BR>",*pt,*(pt+1));
 		pt++;
 	}
@@ -1329,27 +1322,27 @@ void  readMatrixMegaCSV_string(char *data, struct DistanceMatrix *my_mat, char *
 		f_html_error(344,ledir,fres);
 
 	my_mat->n = nb;
-
+	//fprintf(fres,"%d seqs found\n<BR>",nb+1);fclose (fres); exit_properly(ledir);
 
 	my_mat->names = (char **)malloc( (size_t) sizeof(char *) * (my_mat->n + 1) );
 	if ( ! my_mat->names )
 
-		fprintf(fres, "readMatrixMegaCSV_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
+		fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
 
 	my_mat->dist = (double **)malloc( (size_t) sizeof(double *) * (my_mat->n + 1) );
 	if ( ! my_mat->dist )
-		fprintf(fres, "readMatrixMegaCSV_string:read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
+		fprintf(fres, "readMatrixMegaCVS_string:read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
 	for (a = 0; a < my_mat->n; a++) {
 		my_mat->dist[a] = (double *)malloc( (size_t) sizeof(double) * (my_mat->n + 1) );
 		if ( ! my_mat->dist[a] )
-			fprintf(fres, "readMatrixMegaCSV_string: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
+			fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
 	}
 //Now read everything... rewind the string before...
 //printf("%d read<BR>\n",nb);fflush(stdout);
-	pt = data;
+
 	for (a = 0; a < my_mat->n; a++)
 	{
-		if (*pt == ',' || *pt == 10 || *pt == 13 || *pt == ' ') pt++; //skip any no need chars
+		if ( *pt == 10 || *pt == 13 || *pt == ' ') pt++; //skip any no need chars
 		ll = strchr(pt, ',');
 		if (ll != NULL)
 		{
@@ -1364,7 +1357,133 @@ void  readMatrixMegaCSV_string(char *data, struct DistanceMatrix *my_mat, char *
 		else
 			f_html_error(344,ledir,fres);
 
-		pt += n + 1; /*+1 should advance on 1st val*/
+		pt =ll+1;
+		//fprintf(fres, "%.20s<BR>\n",pt);
+		if (strchr(my_mat->names[a], '(') != NULL)
+			remplace(my_mat->names[a], '(', '_');
+
+		if (strchr(my_mat->names[a], ')') != NULL)
+			remplace(my_mat->names[a], ')', '_');
+        if (strchr(my_mat->names[a], '<') != NULL)
+			remplace(my_mat->names[a], '<', '_');
+		if (strchr(my_mat->names[a], '>') != NULL)
+			remplace(my_mat->names[a], '>', '_');
+		if (strchr(my_mat->names[a], '[') != NULL)
+			remplace(my_mat->names[a], '[', '_');
+		if (strchr(my_mat->names[a], ']') != NULL)
+			remplace(my_mat->names[a], ']', '_');
+		//fprintf(fres,"%s<BR>\n",my_mat->names[a]);
+		//fprintf(fres, "%.20s %.20s<BR>\n",pt,pt);
+		for (b = 0; b < a; b++)
+		{
+			if (*pt == ',')
+			{my_mat->dist[a][b] = 0; pt++;}
+			else
+			{
+				if (*pt == '?')
+				{
+					fprintf(fres, "readMatrixMegaCVS 10:**Warning distance between %s and %s is unknown,exiting<BR>\n", my_mat->names[a], my_mat->names[b]), fclose (fres), exit_properly(ledir);
+				}
+				else
+					{
+					if (*pt==10||*pt==13)	fprintf(fres, "readMatrixMegaCVS 10 nbr of seqs %d  not Ok for %s<BR>\n", b,my_mat->names[a]), fclose (fres), exit_properly(ledir);
+
+					int kkk=sscanf(pt, "%f", &d);
+					if (kkk!=1) {fprintf(fres, "read matrix CVS 10 not well formated %d read %d %d (%ld)--%f\n",kkk,a,b,my_mat->n,d); fclose (fres); exit_properly(ledir);}
+					}
+				if (d<0)
+				d=0;
+				my_mat->dist[a][b] = my_mat->dist[b][a] = d;
+				p = strchr(pt, ',');
+				if (p == NULL) f_html_error(344,ledir,fres);
+				pt = p + 1;
+			}
+			//fprintf(fres,"%d %d %f<BR>\n",a,b,my_mat->dist[a][b]);fflush(stdout);
+
+		}
+		my_mat->dist[a][a]=0;
+		while(*pt !='\0' && *pt!='\n' && *pt !=10 && *pt!=13)
+			pt++;
+	}
+
+
+}
+
+/*--------------------------------------------------*/
+void  readMatrixMegaCVS_string(char *data, struct DistanceMatrix *my_mat, char *ledir, FILE *fres)
+{
+	int nb = 0, a = 0, b = 0, n = 0;
+	char *pt=data;
+	char *p, *ll;
+	char *pt2=data;
+	float d;
+	//fprintf(fres," MEGA 5 format CSV detected. <BR>\n");
+	fflush(stdout);
+
+	while((*pt==' ' ||*pt == 13 ||*pt == 10 || *pt=='\n' ||*pt== '\r' ) && *pt!='\0')
+		pt++;
+
+	if (*pt=='\0'){fprintf(fres, "**read matrix CVS not well formated**\n"); fclose (fres); exit_properly(ledir);}
+	//fprintf(fres,"%c(%d)-- --%s<BR>",*pt,*pt,pt);//fclose (fres);exit_properly(ledir);
+	if ( *pt == ',')
+		{
+			//fprintf(fres,"<HR>reading cvs 10 %c<BR>\n",*pt);
+			readMatrixMega10CVS_string(pt, my_mat, ledir, fres);return;}
+//fprintf(fres,"<BR>reading normal cvs<BR>\n");fclose (fres); exit_properly(ledir);
+	while (strncmp(pt, "Table", 5) != 0 && *pt != '\0') //hoping that keyword Table is the end of the matrix
+	{
+
+		//if (*pt == '\n' && ( (*(pt + 1) == '\r') || (*(pt + 1) == 10) || (*(pt + 1) == 13) ) ) if (nb != 0) break;
+		if (*pt == '\n' && isalnum(*(pt + 1))) {nb++;  }
+		//if (*pt == '[') {nb++;  }
+//	if (*pt=='\n') printf("***RC %d %d<BR>",*pt,*(pt+1));
+		pt++;
+	}
+	if (*pt == '\0')
+		f_html_error(343,ledir,fres);
+
+	if (nb <=2)
+		f_html_error(344,ledir,fres);
+
+
+	my_mat->n = nb;
+
+
+	my_mat->names = (char **)malloc( (size_t) sizeof(char *) * (my_mat->n + 1) );
+	if ( ! my_mat->names )
+
+		fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.names, bye<BR>"), fclose (fres), exit_properly(ledir);
+
+	my_mat->dist = (double **)malloc( (size_t) sizeof(double *) * (my_mat->n + 1) );
+	if ( ! my_mat->dist )
+		fprintf(fres, "readMatrixMegaCVS_string:read_distmat: cannot allocate my_mat.dist, bye<BR>"), fclose (fres), exit_properly(ledir);
+	for (a = 0; a < my_mat->n; a++) {
+		my_mat->dist[a] = (double *)malloc( (size_t) sizeof(double) * (my_mat->n + 1) );
+		if ( ! my_mat->dist[a] )
+			fprintf(fres, "readMatrixMegaCVS_string: cannot allocate my_mat.dist[%d], bye<BR>", a), fclose (fres), exit_properly(ledir);
+		}
+//Now read everything... rewind the string before...
+//printf("%d read<BR>\n",nb);fflush(stdout);
+	//*pt = data;
+
+	for (a = 0; a < my_mat->n; a++)
+	{
+		if (*pt2 == ',' || *pt2 == 10 || *pt2 == 13 || *pt2 == ' ') pt2++; //skip any no need chars
+		ll = strchr(pt2, ',');
+		if (ll != NULL)
+		{
+			n = strchr(pt2, ',') - pt2;
+//			n=MINI(strchr(pt2,',')-pt2,SIZE_NAME_DIST);
+			my_mat->names[a] = (char *)malloc( (size_t) sizeof(char) * (n + 1) );
+			strncpy(my_mat->names[a], pt2, n);
+			my_mat->names[a][n] = '\0';
+//			strncpy(my_mat->names[a],pt2, n);
+			n = ll - pt2;
+		}
+		else
+			f_html_error(344,ledir,fres);
+
+		pt2 += n + 1; /*+1 should advance on 1st val*/
 		if (strchr(my_mat->names[a], '(') != NULL)
 			remplace(my_mat->names[a], '(', '_');
 
@@ -1379,30 +1498,40 @@ void  readMatrixMegaCSV_string(char *data, struct DistanceMatrix *my_mat, char *
 		if (strchr(my_mat->names[a], ']') != NULL)
 			remplace(my_mat->names[a], ']', '_');
 //		printf("%s<BR>\n",my_mat->names[a]);fflush(stdout);
+
 		for (b = 0; b <= a; b++)
 		{
-			if (*pt == ',')
-			{my_mat->dist[a][b] = 0; pt++;}
+			if (*pt2 == ',')
+			{my_mat->dist[a][b] = my_mat->dist[b][a] =0; pt2++;}
 			else
 			{
-				if (*pt == '?')
+				if (*pt2 == '?')
 				{
-					fprintf(fres, "readMatrixMegaCSV_string:**Warning distance between %s and %s is unknown,exiting<BR>\n", my_mat->names[a], my_mat->names[b]), fclose (fres), exit_properly(ledir);
+					fprintf(fres, "read matrix CVS:**Warning distance between %s and %s is unknown,exiting<BR>\n", my_mat->names[a], my_mat->names[b]), fclose (fres), exit_properly(ledir);
 				}
 				else
-					sscanf(pt, "%f", &d);
+					{
+					if (*pt2==' ')
+						d=0;
+					else
+					sscanf(pt2, "%f", &d);
+					//if (kkk!=1) {fprintf(fres, "read matrix CVS 6not well formated %d %d (%d)--%f\n",a,b,my_mat->n,d); fclose (fres); exit_properly(ledir);}
+					}
+				if (d<0)
+					d=0;
 				my_mat->dist[a][b] = my_mat->dist[b][a] = d;
-				p = strchr(pt, ',');
+				p = strchr(pt2, ',');
 				if (p == NULL) f_html_error(344,ledir,fres);
-				pt = p + 1;
+				pt2 = p + 1;
 			}
 			//fprintf(fres,"%d %d %f<BR>\n",a,b,my_mat->dist[a][b]);fflush(stdout);
 
-		}
-	}
-
+		}//end b
+		my_mat->dist[a][a]=0;
+	}//end a
 
 }
+
 
 /*------------------------------------------------------*/
 /*
@@ -1425,17 +1554,8 @@ struct DistanceMatrix read_distmat_string( char *data , int fmega, char *ledir, 
 	//fprintf(fres,"read_distmat_string<BR> %d %s",fmega,data),fclose (fres), exit_properly(ledir);
 	fflush(stdout);
 
-#ifdef _WIN32
-		// Naive solution to replace strcasestr: capitalize everything
-		char *s = data;
-		while (*s) {
-			*s = toupper((unsigned char) *s);
-			s++;
-		}
-#endif
-
 	if (fmega == 5)
-		readMatrixMegaCSV_string(data, &my_mat, ledir, fres);
+		readMatrixMegaCVS_string(data, &my_mat, ledir, fres);
 	//else if (strcasestr((const char *)data, "#mega") != NULL )
 	//	readMatrixMega_string(data, &my_mat, ledir, fres);
 	else /* classic phylip distance matrix*/
@@ -1803,6 +1923,13 @@ fprintf(stderr,"DONE\n");
 	return my_mat;
 
 }
+
+
+
+
+
+
+
 
 
 void free_distmat(  struct DistanceMatrix mat ) {
