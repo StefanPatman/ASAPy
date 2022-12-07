@@ -4,6 +4,8 @@ Assemble species by automatic partitioning.
 
 This is a Python wrapper for ASAP: <https://bioinfo.mnhn.fr/abi/public/asap/>
 
+Currently using source code from 27 October 2022.
+
 *(you will need a C compiler when building from source)*
 
 ## Quick start

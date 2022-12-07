@@ -279,7 +279,7 @@ class Main(widgets.ToolDialog):
         self.header = widgets.Header()
         self.header.logoTool = widgets.VectorPixmap(':/resources/logo-asap.svg',
             colormap=self.colormap_icon)
-        self.header.logoProject = QtGui.QPixmap(':/resources/itaxotools-micrologo.png')
+        self.header.logoProject = QtGui.QPixmap(':/resources/itaxotools-logo-new.png')
         self.header.description = (
             'Primary species delimitation' + '\n'
             'using automatic partitioning'
