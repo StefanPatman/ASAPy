@@ -5,7 +5,7 @@
 
 import multiprocessing
 
-from asapy.qt import run
+from itaxotools.asapy.gui import run
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

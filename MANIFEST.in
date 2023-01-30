@@ -10,4 +10,4 @@ include LICENSE.txt
 include setup.py
 
 # Recursively include all resources
-recursive-include src/asapy/qt/resources *
+recursive-include src/itaxotools/asapy/gui/resources *
