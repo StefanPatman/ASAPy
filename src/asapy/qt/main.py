@@ -37,6 +37,8 @@ import pathlib
 import re
 
 from itaxotools.common.param.view import View as ParamView
+from itaxotools.common.param.model import Model as ParamModel
+from itaxotools.common import threading
 from itaxotools.common import machine
 from itaxotools.common import widgets
 from itaxotools import common
@@ -48,6 +50,13 @@ from . import widgets
 from . import resources
 
 
+def work_run(analysis):
+    time.sleep(3)
+    analysis.run()
+    time.sleep(3)
+    return analysis.results
+
+
 class ResultItem(QtWidgets.QListWidgetItem):
     """
     Model for an ASAP analysis result file.
@@ -56,9 +65,9 @@ class ResultItem(QtWidgets.QListWidgetItem):
     Type = QtWidgets.QListWidgetItem.UserType + 1
     Icons = { None: QtGui.QIcon() }
 
-    def __init__(self, file, parent=None):
+    def __init__(self, file):
         """Overloaded with new type"""
-        super().__init__(parent=parent, type=self.Type)
+        super().__init__(type=self.Type)
         self.file = file
         path = pathlib.Path(file)
         suffix = path.suffix
@@ -79,35 +88,44 @@ class ResultView(QtWidgets.QListWidget):
 
         # result files
         for file in sorted(list(path.glob('*.tab')), reverse=True):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # graph files
         for file in sorted(list(path.glob('*.svg'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # spart files
         for file in sorted(list(path.glob('*.spart'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # spart XML files
         for file in sorted(list(path.glob('*.spart.xml'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # partition files (lists)
         for file in sorted(list(path.glob('*.txt'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # partition files (csv)
         for file in sorted(list(path.glob('*.csv'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # tree files
         for file in sorted(list(path.glob('*.tree'))):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
 
         # log files
         for file in list(path.glob('*.log')):
-            ResultItem(str(path / file), self)
+            item = ResultItem(str(path / file))
+            self.addItem(item)
+
 
 class Main(common.widgets.ToolDialog):
     """Main window, handles everything"""
@@ -137,6 +155,8 @@ class Main(common.widgets.ToolDialog):
         self.act()
         self.cog()
 
+        self.setParamModel(self.analysis)
+
         if init is not None:
             self.machine.started.connect(lambda: init(self))
 
@@ -145,6 +165,11 @@ class Main(common.widgets.ToolDialog):
 
     def __setstate__(self, state):
         (self.analysis,) = state
+
+    def setParamModel(self, analysis):
+        self.param_model = ParamModel(analysis.params, self)
+        self.param_model.dataChanged.connect(lambda x: self.postAction('UPDATE'))
+        self.paramWidget.setModel(self.param_model)
 
     def postAction(self, action, *args, **kwargs):
         self.actionSignal.emit(action, args, kwargs)
@@ -340,14 +365,10 @@ class Main(common.widgets.ToolDialog):
 
         self.pane = {}
 
-        # self.paramWidget = ParamView(self.analysis.params)
-        self.paramWidget = QtWidgets.QFrame()
-        # self.paramWidget.setSizePolicy(
-        #     QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
-        # self.paramWidget.setContentsMargins(0, 0, 0, 0)
-        # self.paramWidget.paramChanged.connect(
-        #     lambda e: self.machine.postEvent(utility.NamedEvent('UPDATE')))
-                        # self.postAction('UPDATE')
+        self.paramWidget = ParamView()
+        self.paramWidget.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.paramWidget.setContentsMargins(0, 0, 0, 0)
 
         self.pane['param'] = widgets.Panel(self)
         self.pane['param'].title = 'Parameters'
@@ -620,13 +641,12 @@ class Main(common.widgets.ToolDialog):
                 'All Files (*) ;; Comma Separated Vector files (*.csv)')
         if len(fileName) == 0:
             return
-        self.analysis = core.PartitionAnalysis(fileName)
 
+        self.analysis = core.PartitionAnalysis(fileName)
         suffix = QtCore.QFileInfo(fileName).suffix()
         self.analysis.params.general.mega = (suffix == 'csv')
 
-        # self.paramWidget.setParams(self.analysis.params)
-        print('SET PARAM FOR MODEL')
+        self.setParamModel(self.analysis)
         self.postAction('OPEN', file=fileName)
 
     def handleSave(self):
@@ -713,7 +733,6 @@ class Main(common.widgets.ToolDialog):
     def handleRun(self):
         """Called by toolbar action: run"""
         try:
-            self.paramWidget.applyParams()
             self._temp = tempfile.TemporaryDirectory(prefix='asap_')
             self.analysis.target = pathlib.Path(self._temp.name).as_posix()
         except Exception as exception:
@@ -728,18 +747,12 @@ class Main(common.widgets.ToolDialog):
         def fail(exception):
             self.postAction('FAIL', exception)
 
-        self.launcher = utility.UProcess(self.workRun)
+        self.launcher = threading.Process(work_run, self.analysis)
         self.launcher.done.connect(done)
         self.launcher.fail.connect(fail)
         # self.launcher.setLogger(logging.getLogger())
         self.launcher.start()
         self.postAction('RUN')
-
-    def workRun(self):
-        """Runs on the UProcess, defined here for pickability"""
-        self.analysis.run()
-        # time.sleep(3)
-        return self.analysis.results
 
     def handleStop(self):
         """Called by cancel button"""
