@@ -65,6 +65,8 @@ for more information, please contact guillaume achaz <guillaume.achaz@mnhn.fr>/<
 #include <float.h>
 #endif
 
+#include "wrapio.h"
+
 unsigned long idum_ran1 = 0;
 char *strcasestr(const char *haystack, const char *needle);
 

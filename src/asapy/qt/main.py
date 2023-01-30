@@ -51,9 +51,7 @@ from . import resources
 
 
 def work_run(analysis):
-    time.sleep(3)
     analysis.run()
-    time.sleep(3)
     return analysis.results
 
 
@@ -621,7 +619,7 @@ class Main(common.widgets.ToolDialog):
             self.folder.open(self._temp.name + '/')
             self.folder.setCurrentItem(self.folder.item(0))
             self.handlePreview(self.folder.item(0))
-            self.fail(event.args[0])
+            self.showException(*event.args)
         transition.onTransition = onTransition
         transition.setTargetState(self.state['idle_done'])
         self.state['running'].addTransition(transition)
@@ -744,8 +742,8 @@ class Main(common.widgets.ToolDialog):
             self.analysis.results = result
             self.postAction('DONE', True)
 
-        def fail(exception):
-            self.postAction('FAIL', exception)
+        def fail(exception, trace):
+            self.postAction('FAIL', exception, trace)
 
         self.launcher = threading.Process(work_run, self.analysis)
         self.launcher.done.connect(done)
@@ -797,5 +795,13 @@ class Main(common.widgets.ToolDialog):
             self.fail(exception)
             return
 
-    def fail(selc, exception):
-        raise exception
+    def showException(self, exception, trace):
+        print(trace)
+        msgBox = QtWidgets.QMessageBox(self)
+        msgBox.setWindowTitle(self.title)
+        msgBox.setIcon(QtWidgets.QMessageBox.Critical)
+        msgBox.setText('An exception occured:')
+        msgBox.setInformativeText(str(exception))
+        msgBox.setDetailedText(trace)
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        self.msgShow(msgBox)

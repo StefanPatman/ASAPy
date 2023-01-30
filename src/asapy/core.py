@@ -28,6 +28,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 from itaxotools.common import param
+from itaxotools.common import io
 
 from . import asap
 from . import params
@@ -110,19 +111,12 @@ class PartitionAnalysis():
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target
-        # When running as Windows GUI app, stdout and stderr are NullWriters
-        # that don't define fileno(). In this case, freopen must be called
-        # before redirecting or "Bad file descriptor" error will occur.
-        if (not hasattr(sys.stdout, 'fileno') or
-            not hasattr(sys.stderr, 'fileno')):
-            out, err = asap._freopen()
-            sys.stdout = open(os.devnull, 'w')
-            sys.stderr = open(os.devnull, 'w')
-            sys.stdout.fileno = lambda: out
-            sys.stderr.fileno = lambda: err
-        with open(str(pathlib.Path(self.target) / "asap.log"), 'w') as logfile, \
-                _redirect('stdout', logfile), _redirect('stderr', logfile):
-            asap.main(self.file, **kwargs)
+        with open(pathlib.Path(self.target) / 'asap.log', 'w') as file:
+            with (
+                io.redirect(asap, 'stdout', file),
+                io.redirect(asap, 'stderr', file),
+            ):
+                asap.main(self.file, **kwargs)
         self.results = self.target
 
     def launch(self):

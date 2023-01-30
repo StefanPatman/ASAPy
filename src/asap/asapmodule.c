@@ -30,6 +30,8 @@ https://www.python.org/dev/peps/pep-0489/
 #include "asap.h"
 #include "oldfns.h"
 
+#include "wrapio.h"
+
 #define SIGN( a ) ( ( (a) > 0 )?1: ( ((a)==0)?0:-1)  )
 static int Increase(const void *v1, const void *v2){  	return (int)SIGN( *((double *)v1) - *((double *)v2));  };
 #undef SIGN
@@ -635,18 +637,9 @@ if (asap_param.onlyspart==0)
 }
 
 
-static PyObject *
-asap__freopen(PyObject *self, PyObject *args) {
-	FILE *dout = freopen("NUL:","w",stdout);
-	FILE *derr = freopen("NUL:","w",stderr);
-	return Py_BuildValue("(ii)", fileno(stdout), fileno(stderr));
-}
-
 static PyMethodDef AsapMethods[] = {
   {"main",  asap_main, METH_VARARGS | METH_KEYWORDS,
    "Run ASAP on a file for given parameters."},
-	{"_freopen",  asap__freopen, METH_VARARGS,
-	"Reopen stdout/stderr."},
   {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -666,12 +659,14 @@ PyMODINIT_FUNC
 PyInit_asap(void)
 {
 	PyObject *m = NULL;
-  m = PyModule_Create(&asapmodule);
-	// if (m != NULL) {
-	// 	if (PyModule_AddStringConstant(m, "separator", "/")) {
-	// 		Py_XDECREF(m);
-	// 		m = NULL;
-	// 	}
-	// }
+
+	if (!(m = PyModule_Create(&asapmodule)))
+		return NULL;
+
+	if (wrapio_init(m)) {
+		Py_XDECREF(m);
+		return NULL;
+	}
+
 	return m;
 }

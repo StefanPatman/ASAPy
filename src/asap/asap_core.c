@@ -50,6 +50,8 @@ for more information, please contact guillaume achaz <guillaume.achaz@mnhn.fr>/<
 #include "asap.h"
 #include "asap_core.h"
 
+#include "wrapio.h"
+
 
 int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbinter, double *Sinter, Tabcompo *strucompo)
 {
@@ -79,13 +81,13 @@ int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbint
 			b=a;
 			a=temp;
 			}
-			
-		
-		
+
+
+
 
 		compo->Sall_in_comp[aa]+=compo->Sall_in_comp[bb];             /* aa now also includes the bb */
-		
-			
+
+
 		/*
 			then add distances and nnbrs of comparisons
 		*/
@@ -112,7 +114,7 @@ int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbint
 		}
 
 //			compo->altered[bb] = 0;
-		
+
 			/*
 			put a flag on aa in order to not count it if it has to be merged again
 		*/
@@ -122,13 +124,13 @@ int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbint
 			compo->naltered++;
 			compo->altered[aa] = 1;;
 		}
-		
+
 		if (compo->altered[bb] == 1) //bb is in the list of modfied comp so remove it
 		{
 			for (i=0;i<compo->naltered;i++)
 				if (compo->altered_comp[i]==bb)
 				{
-				for (j=i;j<compo->naltered-1;j++)	
+				for (j=i;j<compo->naltered-1;j++)
 					compo->altered_comp[j]=compo->altered_comp[j+1];
 				break;
 				}
@@ -165,8 +167,8 @@ int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbint
 
 
 		/*
-			update single values	
-		*/		
+			update single values
+		*/
 		compo->nc=compo->nc -1;
 		compo->n_in_comp[aa]=nbnewcomp;
 		compo->n_in_comp[bb]=0;
@@ -176,9 +178,9 @@ int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbint
  			printf("node %d (eff %d ) ",strucompo[aa].nodecompo[i],strucompo[aa].effcompo[i] );
 printf("\n");*/
 		return 1;
-		
+
 	}
-	
+
 	return 0;
 }
 
@@ -187,7 +189,7 @@ long int sommeprodtab(int *t, int nb)
 {
 	int i, j;
 	long int s = 0;
-	
+
 	for (i = 0; i < nb - 1; i++)
 		for (j = i + 1; j < nb; j++)
 			s += (t[i] * t[j]);
@@ -220,11 +222,11 @@ void from_compo_to_tree(Composante *comp, Node *zenodes, int *node_ori, int *lis
 	int  nbstruct;
 	int maxnodes=(2*mat.n)-1;
 
-	
+
 	/*
 		Scan all groups/composantes that were altered this round
 	*/
-	
+
 	for (i = 0; i < comp->naltered; i++)
 	{
 
@@ -239,15 +241,15 @@ void from_compo_to_tree(Composante *comp, Node *zenodes, int *node_ori, int *lis
 			sum_all = sum_intra = sum_inter = 0.0;
 			nb_all = nb_inter = 0;
 
-			
+
 			(*node_ori)++;                   // we have a new node
-			
+
 
 			if (*node_ori >(mat.n*2)-1)
 				fprintf(stderr,"grossss grosss pbn\n"),exit(1);
-	
 
-	
+
+
 			if (*node_ori>=maxnodes)fprintf(stderr,"not enough nodes?????\n"),fprintf(f, "not enough nodes"),fclose(f), exit_properly(ledir);
 
 			nbstruct = strucompo[c1].nb;     // component c1 is made of nbstruct same than nbr of descendant of the new_node
@@ -264,28 +266,28 @@ void from_compo_to_tree(Composante *comp, Node *zenodes, int *node_ori, int *lis
 			for (j = 0; j<nbstruct; j++)
 				{
 					int olnod=list_nodes[strucompo[c1].nodecompo[j]];// get node of the first sequence
-					
-				
+
+
 					zenodes[*node_ori].desc[j] = olnod; // link the new node with the old seq's node
 					if (olnod<0 || olnod>=maxnodes) fprintf(stderr," node:%d (j=%d c1=%d)PB\n",olnod,j,c1),exit(1);
-					
-			
+
+
 					nleaves += zenodes[olnod].nb_under;
-					
-				
+
+
 					zenodes[olnod].anc = *node_ori;
-			
+
 //					printf("---->node[%d].anc=%d desc(%d)=%d --->zenold[%d].anc=%d\n",olnod,*node_ori,j,olnod,olnod,zenodes[olnod].anc);
-					
-					
+
+
 				}
-			zenodes[*node_ori].nb_under = nleaves;	
-			
-			
-			
+			zenodes[*node_ori].nb_under = nleaves;
+
+
+
 			//upddate listnode: all the new grouped must have the same new node number
-			
-			for (j = 0; j<nbstruct; j++)	
+
+			for (j = 0; j<nbstruct; j++)
 				{
 				int olnod=strucompo[c1].nodecompo[j];
 				if (olnod<0 || olnod>=maxnodes) fprintf(stderr," node:%d (j=%d c1=%d)PB\n",olnod,j,c1),exit(1);
@@ -293,8 +295,8 @@ void from_compo_to_tree(Composante *comp, Node *zenodes, int *node_ori, int *lis
 					list_nodes[comp->comp[olnod][k]]= *node_ori;// all seqs previously in the same than the fisrt seq must change
 				}
 		//	free(tempo_nodes);
-			
-			
+
+
 
 			/*
 				Compute S_all
@@ -308,7 +310,7 @@ void from_compo_to_tree(Composante *comp, Node *zenodes, int *node_ori, int *lis
 			for (j = 0; j < zenodes[*node_ori].nbdesc; j++)
 			{
 				desc = zenodes[*node_ori].desc[j];
-				sum_intra = sum_intra + zenodes[desc].sum_all;   /* sum of all of the previous step is the new intra*/ 
+				sum_intra = sum_intra + zenodes[desc].sum_all;   /* sum of all of the previous step is the new intra*/
 			}
 
 
@@ -346,11 +348,11 @@ double calcul_pente(double d, DistPair *ListDist, int nbv ,float pond_pente)
 
 	int shift_r_H=0,
 	    shift_r_L=0;
-	    
+
 	double d_min, d_max,
 		 d_L = ListDist[0].d,
 	       d_H = ListDist[nbv-1].d;
-	
+
 	int i=0;
 
 
@@ -368,12 +370,12 @@ double calcul_pente(double d, DistPair *ListDist, int nbv ,float pond_pente)
 	while( (i-shift_r_L)>0 && ListDist[i-shift_r_L].d >= d_max )
 			shift_r_L++;
 	d_L=ListDist[i-shift_r_L].d;
-	
+
 //	printf("for d_T= %f => [%f,%f]; d_L=%f; d_H=%f; n: %d+%d --> p:%f\n", d,d_min,d_max,d_L, d_H, shift_r_H,shift_r_L,100*(d_H-d_L)/(double)((1.0+d_H+d_L)*(shift_r_H+shift_r_L)));
-	
+
 	if(shift_r_H+shift_r_L)
 		return  (d_H-d_L)/(double)( (1.0+d_H+d_L)*(shift_r_H+shift_r_L) );
-		
+
 	else
 		return 0;
 
@@ -388,7 +390,7 @@ double calcul_pente_old(double d, DistPair *glutine, int nbv ,float pond_pente)
 	int pente_r=0, pente_l=0;
 	double dmin=glutine[0].d,
 	       dmax=glutine[nbv-1].d;
-	
+
 	int i=0;
 
 	while( glutine[i].d != d && i<nbv )i++;
@@ -398,23 +400,23 @@ double calcul_pente_old(double d, DistPair *glutine, int nbv ,float pond_pente)
 			dmax=glutine[i+pente_r].d;
 			pente_r++;
 		}
-			
+
 	while( (i-1-pente_l)>=0 && glutine[i-1-pente_l].d >= glutine[i-1].d*(1.0- pond_pente))
 	{
 			dmin=glutine[i-1-pente_l].d;
 			pente_l++;
 	}
 
-	
+
 	//printf("for d= %f, dseuilg=%f; dseuild=%f; dmin=%f; dmax=%f; n: %d+%d --> p:%f\n", d,d*(1.0-pond_pente),d*(1.0+pond_pente),dmin, dmax, pente_r,pente_l,200.0*(dmax-dmin)/(double)((1+dmax+dmin)*(pente_r+pente_l)));
 	if(pente_r+pente_l)
 		return  200.0*(dmax-dmin)/(double)((1+dmax+dmin)*(pente_r+pente_l));
-		
+
 	else
 		return 0;
 
 /*	if(pente_r+pente_l)
-		return  100.0*(dmax-dmin)/(double)(pente_r+pente_l);	
+		return  100.0*(dmax-dmin)/(double)(pente_r+pente_l);
 	else
 		return 0;*/
 }
@@ -442,7 +444,7 @@ void newStatCoal(Node *zenodes,
                  double S_intra_tot_obs,     // total Sintra in all subgroups in observed data
 		 long nb_intra_tot_obs,           	// total number of intra comparison in observed data
 		 int replicates                  	// number of simulations
-	
+
 ){
 
 	int i,  k, j, c1;
@@ -451,21 +453,21 @@ void newStatCoal(Node *zenodes,
 	int nbreplicates_ini=500;
 	int effort=1e5;
 	int nb_skipped=0;
-	 
+
 	double S_intra_altered_obs=0;
-	 
+
 	double S_intra_theo=0,
 	       S_all_theo=0;
-	       
+
 	double  pi_intra_theo=0;
 
 	double S_intra_theo_partition=0;
-	       
+
 	double pi_intra_theo_partition;
 	long int nb_intra_theo;
 	long int nb_intra_theo_partition;
 	long int nb_intra_altered=0;
-	
+
 	double theta;
 
 	long part_replicates=0;
@@ -482,19 +484,19 @@ void newStatCoal(Node *zenodes,
 	scores[part].proba=0;
 	S_intra_altered_obs = 0;
 	nb_intra_altered = 0;
-	
+
 	for (i = 0; i < comp->naltered; i++)
 	{
 		c1 = comp->altered_comp[i];
 		current_node = list_node[comp->comp[c1][0]];
-		
+
 		nb_intra_altered    += zenodes[current_node].nb_intra;
 		S_intra_altered_obs += zenodes[current_node].sum_intra;
-		
+
 	//	if (zenodes[current_node].nb_under<=2)zenodes[current_node].to_draw=0; else zenodes[current_node].to_draw=1;
 
 		// if only leaves under, set to_draw=0, otherwise to_draw=1
-/*		for (k=0;k<zenodes[current_node].nbdesc;k++)	
+/*		for (k=0;k<zenodes[current_node].nbdesc;k++)
 		{
 			int d=zenodes[current_node].desc[k];
 			if (zenodes[d].nbdesc>0)                     // then it is not a leaf
@@ -511,7 +513,7 @@ void newStatCoal(Node *zenodes,
 		}
 
 	}
-	
+
 
 	if( part == 0 )
 		{
@@ -525,22 +527,22 @@ void newStatCoal(Node *zenodes,
 	*/
 	replicates = nbreplicates_ini;       // start with a small nuber of replicates
 	nb_skipped = 0;
-	
-	
+
+
 	for (k = 0; k < replicates; k++)
 	{
-	
+
 		S_intra_theo_partition  = 0;
 		nb_intra_theo_partition = 0;
-		
+
 		/*
 			Evaluate all nodes that has been altered
 		*/
 		for (i = 0; i < comp->naltered; i++)
 		{
-	
+
 			int k_obs=0;
-	
+
 			c1 = comp->altered_comp[i];      // the focal group
 
 			if (comp->comp[c1][0] == -1)
@@ -548,14 +550,14 @@ void newStatCoal(Node *zenodes,
 
 
 			/*
-				retrieve info from the observed node 
+				retrieve info from the observed node
 			*/
 			current_node = list_node[comp->comp[c1][0]];                    // access the node of the focal group by the first sequence of c1
 
 
 			pi_inter_node = (zenodes[current_node].nb_inter>0) ? zenodes[current_node].sum_inter / zenodes[current_node].nb_inter : 0;
 			pi_intra_node = (zenodes[current_node].nb_intra>0) ? zenodes[current_node].sum_intra / zenodes[current_node].nb_intra : 0;
-	
+
 
 
 
@@ -568,27 +570,27 @@ void newStatCoal(Node *zenodes,
 								k_obs=zenodes[d].nb_under;
 					}
 
-		
+
 			if ( zenodes[current_node].to_be_checked == 0 ) continue;
-			
+
 			/*
 				Run coalescent simulations with adequate theta
 			*/
 			theta = lenSeq * pi_inter_node * nleaves/(2.0*(nleaves-1.0));     // set theta so that inter is the same on average
-			
+
 			RandomPi( nleaves, theta/2.0, lengthTreeLeft, lengthTreeRight, size, &S_intra_theo, &nb_intra_theo, &S_all_theo,k_obs);
-			
+
 			pi_intra_theo = (nb_intra_theo == 0) ? 0 : S_intra_theo / (double) nb_intra_theo;
 			/*
 				Compare random stats with obs
 			*/
 			if ( zenodes[current_node].nb_intra>0 && pi_intra_theo - EPSILON <= pi_intra_node * lenSeq )
 				zenodes[current_node].pval++;
-			
+
 
 			zenodes[current_node].S_all_theo   += S_all_theo;
 			zenodes[current_node].S_intra_theo += S_intra_theo;
-			
+
 			nb_intra_theo_partition += nb_intra_theo;
 			S_intra_theo_partition += S_intra_theo;
 
@@ -602,17 +604,17 @@ void newStatCoal(Node *zenodes,
 					zenodes[current_node].replicates = (k+1);
 
 					//zenodes[current_node].pval = (zenodes[current_node].pval+1.0)/( (k+1)+1.0);   //  k is ++ at the loop end.
-				
+
 					zenodes[current_node].pval = (zenodes[current_node].pval+1)/( (k+1)+1.0);   //  k is ++ at the loop end.
 
 					if( (zenodes[current_node].pval+1.0) > (k+1)+1.0 )
 						{printf("PB pval:%f k: %d curent_node:%d ",zenodes[current_node].pval,k,current_node);exit (54);}
-					
+
 				}
-				
+
 
 			}
-			
+
 
 		} // end of comp->naltered
 
@@ -621,7 +623,7 @@ void newStatCoal(Node *zenodes,
 		*/
 		if ( nb_skipped == 0 )
 		{
-		
+
 			/*
 				Add unaltered nodes
 			*/
@@ -631,12 +633,12 @@ void newStatCoal(Node *zenodes,
 			pi_intra_theo_partition = S_intra_theo_partition / (double)nb_intra_theo_partition;
 
 			part_replicates = k+1;
-			
+
 			if ( pi_intra_theo_partition-EPSILON <= (pi_intra_obs * lenSeq))
 				scores[part].proba++;
 
 		}
-		
+
 
 		if( nb_skipped < comp->naltered )
 		{
@@ -651,8 +653,8 @@ void newStatCoal(Node *zenodes,
 //
 for (i = 0; i < comp->naltered; i++)
 {
-	c1 = comp->altered_comp[i];   
-	current_node = list_node[comp->comp[c1][0]];  
+	c1 = comp->altered_comp[i];
+	current_node = list_node[comp->comp[c1][0]];
 	if (zenodes[current_node].to_be_checked ==1 && zenodes[current_node].nb_intra>0 )
 			zenodes[current_node].pval= (zenodes[current_node].pval+1.0)/(k+1.0);
 }
@@ -673,8 +675,8 @@ for (i = 0; i < comp->naltered; i++)
 int  (specie_node_recurse)(Node *zenodes,int n,double score)
 {
 int i,m;
-//printf("->%d \n",zenodes[n].nbdesc);	
-int nb=0;	
+//printf("->%d \n",zenodes[n].nbdesc);
+int nb=0;
 //if (FFflag==1) printf("ds sp rec: %d %f nbdesc:%d %d\n",zenodes[n].nbdesc,zenodes[n].pval,zenodes[n].nbdesc,nb);
 if (zenodes[n].nbdesc>0 && zenodes[n].pval<= score )
 
@@ -682,17 +684,17 @@ if (zenodes[n].nbdesc>0 && zenodes[n].pval<= score )
 			for (i=0;i<zenodes[n].nbdesc;i++)
 				{
 				m=	zenodes[n].desc[i];
-				//if (FFflag==1)printf("\tn=%d-->%d *\n",m,nb);	
-			
+				//if (FFflag==1)printf("\tn=%d-->%d *\n",m,nb);
+
 				nb+=(specie_node_recurse(zenodes,m,score) );
-								
-						
+
+
 				}
 				//if (FFflag==1)printf("fils:%d nb:%d\n",zenodes[n].nbdesc,nb);
-				return (nb);	
+				return (nb);
 		}
 
-//printf("sortie->%d \n",zenodes[n].nbdesc);	
+//printf("sortie->%d \n",zenodes[n].nbdesc);
 //if (zenodes[n].nbdesc==zenodes[n].nb_under)
 //return zenodes[n].nbdesc;
 //else
@@ -710,27 +712,27 @@ int compo_rspecie(Composante *comp, Node *zenodes, double seuil,int *list_node,i
 scores[round].nb_nodes=0;
 	for( i =0; i< nbseq ;i++)
 	{
-		
+
 		if (comp->n_in_comp[i]!=0)
 		{
 
 			current_node = list_node[comp->comp[i][0]];
-			
+
 			//if (current_node==129)	FFflag=1	; else FFflag=0;
 
 			if( zenodes[current_node].dist == scores[round].d )
 			{
-				
+
 				for(k=0;k<zenodes[current_node].nbdesc;k++)
 				{
-				
+
 					nb_rplus += specie_node_recurse(zenodes,zenodes[current_node].desc[k],seuil);
-					
+
 				}
 			}
 			else
 			{
-				
+
 				nb_rplus += specie_node_recurse(zenodes,current_node,seuil);
 			}
 
@@ -740,11 +742,11 @@ scores[round].nb_nodes=0;
 	//	int oo;
 	//	for (oo=0;oo<zenodes[current_node].nbdesc;oo++)
 	//		printf("%d,",zenodes[current_node].desc[oo]);
-	//	printf("]\n");		
+	//	printf("]\n");
 			j++;
 		}
 	}
-	
+
 	return nb_rplus;
 
 }
@@ -789,7 +791,7 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 	fprintf(asap_param.f_out, "#ID   \t#subsets \t#subsets w/rec\tdist     \tPi_i/Pi_a\tPi_inter\tPi_intra\t#inter\t#intra\tpval\n");
 	}
 
-/*	simnodes = (Node * )malloc( sizeof(Node) * nbnodesmax);   
+/*	simnodes = (Node * )malloc( sizeof(Node) * nbnodesmax);
 	for (i = 0; i <	nbnodesmax; i++)
 		simnodes[i].desc = (int *)malloc( (size_t) sizeof(int) * 2);
 */
@@ -835,15 +837,15 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 			//fprintf(stderr,"*");
 
 			scores[nbresults].d = dist;                 /* this store the results */
-	
+
 
 			scores[nbresults].d_jump = (dist + ((nbresults)?scores[nbresults-1].d:0) ) /2.0;                /* this store the results */
-	
 
-			scores[nbresults].nbgroups = comp->nc; // 
+
+			scores[nbresults].nbgroups = comp->nc; //
 			scores[nbresults].rank = i;
-	
-			
+
+
 			from_compo_to_tree(comp, zenodes, lastnode, list_node, mat, asap_param.fres, strucompo, nbresults, dist, asap_param.ledir, comp->nc);    /* All altered composants are turned into nodes, can be improved CHECK */
 
 			scores[nbresults].last_node= *lastnode;
@@ -854,8 +856,8 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 				pi_intra = (float)(S_intra) / (float)nbintra; //just for output no use
 			else
 				pi_intra = 0;
-				
-			
+
+
 			if (nbinter != 0)
 				pi_inter = (float)(S_inter) / (float)nbinter; //just for output no use
 			else
@@ -867,23 +869,23 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 			newStatCoal(zenodes, asap_param.fres, asap_param.lenSeq, comp, pi_inter, pi_intra, nbresults, size, lengthTreeLeft, lengthTreeRight, scores, list_node, asap_param.ledir, mat.n, S_intra, nbintra, asap_param.replicates);
 
 
-	
+
 			if (*best > scores[nbresults].proba)
 				*best = scores[nbresults].proba;
 
 			int nbspecies = (nbresults==0)?mat.n:scores[nbresults-1].nbgroups;//voir fn qui descend recursivt autre var qui descend recur
 
 			nbspecies_rec=compo_rspecie(comp, zenodes,asap_param.seuil_pvalue,list_node,mat.n,scores,nbresults);
-			scores[nbresults].proba_part=malloc(sizeof(double)*(nbspecies_rec+1));// needed for Spart 
-			
+			scores[nbresults].proba_part=malloc(sizeof(double)*(nbspecies_rec+1));// needed for Spart
+
 			//printf("ds comp %d--->%d 	%d more (res:%d) \n",comp->nc,nbspecies,nbspecies_rec,nbresults);
 			//print_comp(*comp, comp->nc, strucompo);
-			if (nbspecies_rec < nbspecies) {nbspecies_rec=nbspecies;}//PB HERE FOR FIRST PARTITIONS OTHERWISE WEIRD FIRST RES if 
+			if (nbspecies_rec < nbspecies) {nbspecies_rec=nbspecies;}//PB HERE FOR FIRST PARTITIONS OTHERWISE WEIRD FIRST RES if
 	//print_comp(*comp, comp->nc, strucompo);
 	//			if (scores[nbresults].proba<=0.05)
 	//		{printf("\n >> nbresults:%d respecies2:%d nc=%d ncalt=%d °°°°°°°°°°\n",nbresults,compo_rspecie2(comp, zenodes,0.05,list_node,mat.n),comp->nc,comp->naltered);}
-		
-			
+
+
 
 			scores[nbresults].nbspecRec=nbspecies_rec;
 			scores[nbresults].nbspec=nbspecies;
@@ -903,15 +905,15 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 
 
 			nbresults++;
-		
+
 			if (nbresults >mat.n)
 					{
-					nbrealloc++;	
+					nbrealloc++;
 					scores=realloc(scores,sizeof(Results)*(mat.n*nbrealloc));
 
 					}
 		}
-		
+
 		S_intra = S_all;
 		nbintra = n_all;
 
@@ -925,8 +927,8 @@ int do_agglutine(DistMat mat, Composante *comp, DistPair *ListDist, Results *sco
 
 
 	}
-/*	scores[nbresults].d = dist;    //  est ce quil ne manque pas les dernieres ditsanceS......             
-	scores[nbresults].nbgroups = 1; 
+/*	scores[nbresults].d = dist;    //  est ce quil ne manque pas les dernieres ditsanceS......
+	scores[nbresults].nbgroups = 1;
 	scores[nbresults].rank = i;
 	nbresults++;
 */
@@ -953,11 +955,11 @@ void place_two_nodes_firstpos(int * array, int size) {
 	int temp = 0;
 
 	n = (int)floor( unirandom() * size);
-	
+
 	temp = array[0];
 	array[0] = array[n];
 	array[n] = temp;
-	
+
 	n = (int)floor( unirandom() * (size-1.0) )+1;
 
 	temp = array[1];
@@ -999,7 +1001,7 @@ void add_one_mutation(Node *zenodes, int nbn, double lenghtTot)
 	int c = 2*nbn-2;
 
 	t = zenodes[c].time;
-	
+
 	while( t_rand > t ){
 		c--;
 		t += zenodes[c].time;
@@ -1064,11 +1066,11 @@ int BuildRandomTree(int nleaves, Node *zenode, FILE *f)
 		zenode[current_node].name = NULL;
 		zenode[current_node].anc = -1;
 
-	
+
 		/*
 			update for next round
 		*/
-		nleaves--;  
+		nleaves--;
 		prestants ++;
 		*prestants = current_node;
 		current_node++;
@@ -1083,11 +1085,11 @@ void SplitSize( LeftRight *size, int tot, int *min, int *max){
 
         int U1,U2;
         int i;
-        
+
         int c=0;
         char side=0;
-        
-        
+
+
         /*
                 Pick U1 and choose in size
         */
@@ -1097,7 +1099,7 @@ void SplitSize( LeftRight *size, int tot, int *min, int *max){
         {
                 c+=size[i].L*i;
                 if(c>=U1){side='l';break;}
- 
+
                 c+=size[i].R*i;
                 if(c>=U1){side='r';break;}
 
@@ -1107,8 +1109,8 @@ void SplitSize( LeftRight *size, int tot, int *min, int *max){
                 Pick U2 to split the lineage of the chosen size into U2 and n-U2
         */
         U2=(int) floor( unirandom() * i )+1; // an int in [1,i]. Remember i is size-1
-        
-                
+
+
         /*
                 Split
         */
@@ -1122,13 +1124,13 @@ void SplitSize( LeftRight *size, int tot, int *min, int *max){
 	        size[ U2 -1 ].L++;
     	    size[ (i+1)-U2 -1].L++;
         }
-        	
+
         /*
-                Update Min and Max 
+                Update Min and Max
         */
         *min=( U2-1 <*min )? U2-1 : *min;
         *min=( (i+1)-U2 -1<*min )?(i+1)-U2 -1 : *min;
-        
+
         while(size[*max].L==0 && size[*max].R==0)(*max)--;
 
 }
@@ -1149,23 +1151,23 @@ int RandomPi( int n, double MutRate, double *lengthTreeLeft, double *lengthTreeR
 	int i, min, max;      /* min and max in the size array */
 	double t;
 	int k=0;               /* number of lineage to the left */
-	int m;	
+	int m;
 	int verbose=0;
-	
+
 	/*
 		Init Top Down
 	*/
-	
+
 	/*
 		Split r and l
 	*/
-	
+
 //	k=uniInt(1,n-1);
 		k=k_obs;
 	size[k-1].L=1;
 	size[n-k-1].R=1;
 	if (k>n-k){max=k-1;min=n-k-1;}else{min=k-1;max=n-k-1;}
-	
+
 	/*
 		Update tables
 	*/
@@ -1174,31 +1176,31 @@ int RandomPi( int n, double MutRate, double *lengthTreeLeft, double *lengthTreeR
 
 
 	if(verbose){PrintSize( size, n, min, max );PrintLength(lengthTreeLeft,lengthTreeRight,n);printf("//\n");}
-		
+
 	/*
 		Built Right and Left lengthTree for each subsequent step
 	*/
 	for(i=3;i<=n;i++)
-	{	
+	{
 		SplitSize( size, n-i+1, &min, &max);
-		
+
 		t = (exponentialdev() * ( 2.0 / ( (double)i * (i - 1.0) ) ));
 		compute_length(t,size,lengthTreeLeft,lengthTreeRight,min,max);
 
 		if(verbose){PrintSize( size, n, min, max );PrintLength(lengthTreeLeft,lengthTreeRight,n);putchar('\n');}
 	}
-	
-	
+
+
 	/*
 		Compute Pintra
 	*/
 	*S_intra=0;
 	*S_all=0;
-	
-	
 
-	
-	
+
+
+
+
 	//for(i=0;i<k;i++) sofiz
 	for(i=0;i<=k;i++)
 	{

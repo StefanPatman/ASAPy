@@ -77,6 +77,8 @@
 #endif
 #define NBCHARMALLOC 256
 
+#include "wrapio.h"
+
 void usage(char *arg)
 {
 	fprintf(stderr, "/*\n\tAgglomerate Specimens by Automatic Processing\n*/\n");

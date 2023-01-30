@@ -50,6 +50,8 @@
 #define strcasestr strstr
 #endif
 
+#include "wrapio.h"
+
 #define COMMON_SYMBOL 1
 
 

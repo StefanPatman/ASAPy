@@ -20,6 +20,7 @@ asapmodule = Extension('asapy.asap',
             'src/asap/draw.c',
             'src/asap/gdtosvg.c',
             'src/asap/oldfns.c',
+            'src/asap/wrapio.c',
             ],
         extra_compile_args = ["-w"],
     )
@@ -150,7 +151,7 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'itaxotools-common',
+        'itaxotools-common==0.2.4',
         'pyqt6',
     ],
 

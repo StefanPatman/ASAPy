@@ -5,6 +5,9 @@
 #include <ctype.h>
 #include "asap.h"
 #include "gdtosvg.h"
+
+#include "wrapio.h"
+
 #define NBCOLORS 10
 
 #define SIZEOFLEGEND 100
@@ -41,9 +44,9 @@ unsigned char getColor(double val, double maxi, double mini)
 				return (50);
 			else
 				return (0);
-}	
+}
 
- 
+
 void CreateHeadersvg(FILE *svgout)
 {
 	fprintf(svgout, "<?xml version=\"1.0\" standalone=\"no\"?>\n");
@@ -129,7 +132,7 @@ void draw_heat_svg(FILE *f, struct DistanceMatrix mat, Node *zenode   , double m
 
 
 	CreateHeadersvg	(f);
-	
+
 	for (j = 0; j <	mat.n; j++)
 		{
 		ii = zenode[j].first_to_draw;
@@ -140,7 +143,7 @@ void draw_heat_svg(FILE *f, struct DistanceMatrix mat, Node *zenode   , double m
 	for (i = 0; i < mat.n; i++)
 		{
 		ii = zenode[i].first_to_draw;
-		fprintf(f, "<text x=\"%d\" y=\"%d\" font-size=\"10\"  onmousemove=\"ShowTooltip(evt, \'Seq%d:%s\')\" onmouseout=\"HideTooltip(evt)\"> S%d </text>\n", 
+		fprintf(f, "<text x=\"%d\" y=\"%d\" font-size=\"10\"  onmousemove=\"ShowTooltip(evt, \'Seq%d:%s\')\" onmouseout=\"HideTooltip(evt)\"> S%d </text>\n",
 				1, MARGE+(int)(ii*ech), ii, mat.names[ii], ii);
 		for (j = 0; j < mat.n; j++)
 			{
@@ -155,8 +158,8 @@ void draw_heat_svg(FILE *f, struct DistanceMatrix mat, Node *zenode   , double m
 				        MARGE + aa, MARGE + bb, (int)ech, (int)ech, c, c,c,i + 1, mat.dist[ii][jj]);
 			}
 		}
-	
-	
+
+
 	fprintf(f, "</g><rect class=\"tooltip_bg\" id=\"tooltip_bg\"\n");
 	fprintf(f, "x=\"0\" y=\"0\" rx=\"4\" ry=\"4\"\n");
 	fprintf(f, "width=\"55\" height=\"17\" visibility=\"hidden\"/>\n");
@@ -166,4 +169,3 @@ void draw_heat_svg(FILE *f, struct DistanceMatrix mat, Node *zenode   , double m
 	fprintf(f, "</svg></HTML>\n");
 
 }
-
