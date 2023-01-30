@@ -37,6 +37,9 @@ import pathlib
 import re
 
 from itaxotools.common.param.view import View as ParamView
+from itaxotools.common import machine
+from itaxotools.common import widgets
+from itaxotools import common
 
 from .. import core
 
@@ -106,8 +109,10 @@ class ResultView(QtWidgets.QListWidget):
         for file in list(path.glob('*.log')):
             ResultItem(str(path / file), self)
 
-class Main(widgets.ToolDialog):
+class Main(common.widgets.ToolDialog):
     """Main window, handles everything"""
+
+    actionSignal = QtCore.Signal(str, list, dict)
 
     def __init__(self, parent=None, init=None):
         super(Main, self).__init__(parent)
@@ -140,6 +145,20 @@ class Main(widgets.ToolDialog):
 
     def __setstate__(self, state):
         (self.analysis,) = state
+
+    def postAction(self, action, *args, **kwargs):
+        self.actionSignal.emit(action, args, kwargs)
+
+    def taggedTransition(self, action):
+        return machine.TaggedTransition(self.actionSignal, action)
+
+    def filterReject(self):
+        """If running, verify cancel"""
+        if self.state['running'] in list(self.machine.configuration()):
+            self.handleStop()
+            return False
+        else:
+            return True
 
     def skin(self):
         """Configure widget appearance"""
@@ -328,6 +347,7 @@ class Main(widgets.ToolDialog):
         # self.paramWidget.setContentsMargins(0, 0, 0, 0)
         # self.paramWidget.paramChanged.connect(
         #     lambda e: self.machine.postEvent(utility.NamedEvent('UPDATE')))
+                        # self.postAction('UPDATE')
 
         self.pane['param'] = widgets.Panel(self)
         self.pane['param'].title = 'Parameters'
@@ -444,6 +464,9 @@ class Main(widgets.ToolDialog):
 
     def cog(self):
         """Define state machine"""
+
+        self.machine = QtStateMachine.QStateMachine(self)
+
         self.state = {}
         self.state['idle'] = QtStateMachine.QState()
         self.state['idle_none'] = QtStateMachine.QState(self.state['idle'])
@@ -455,6 +478,10 @@ class Main(widgets.ToolDialog):
         self.state['idle'].setInitialState(self.state['idle_none'])
         self.state['idle_done'].setInitialState(self.state['idle_unchanged'])
         self.state['running'] = QtStateMachine.QState()
+
+        self.machine.addState(self.state['idle'])
+        self.machine.addState(self.state['running'])
+        self.machine.setInitialState(self.state['idle'])
 
         state = self.state['idle']
         state.assignProperty(self.action['run'], 'visible', True)
@@ -524,8 +551,9 @@ class Main(widgets.ToolDialog):
             self.pane['preview'].flagTip = tip
         state.onEntry = onEntry
 
-        transition = utility.NamedTransition('OPEN')
+        transition = self.taggedTransition('OPEN')
         def onTransition(event):
+            event = machine.TaggedEvent(event)
             file = event.kwargs['file']
             fileInfo = QtCore.QFileInfo(file)
             fileName = fileInfo.fileName()
@@ -541,12 +569,13 @@ class Main(widgets.ToolDialog):
         transition.setTargetState(self.state['idle_open'])
         self.state['idle'].addTransition(transition)
 
-        transition = utility.NamedTransition('RUN')
+        transition = self.taggedTransition('RUN')
         transition.setTargetState(self.state['running'])
         self.state['idle'].addTransition(transition)
 
-        transition = utility.NamedTransition('DONE')
+        transition = self.taggedTransition('DONE')
         def onTransition(event):
+            event = machine.TaggedEvent(event)
             self.folder.open(self.temp.name + '/')
             self.folder.setCurrentItem(self.folder.item(0))
             self.handlePreview(self.folder.item(0))
@@ -561,12 +590,13 @@ class Main(widgets.ToolDialog):
         transition.setTargetState(self.state['idle_unchanged'])
         self.state['running'].addTransition(transition)
 
-        transition = utility.NamedTransition('UPDATE')
+        transition = self.taggedTransition('UPDATE')
         transition.setTargetState(self.state['idle_updated'])
         self.state['idle_done'].addTransition(transition)
 
-        transition = utility.NamedTransition('FAIL')
+        transition = self.taggedTransition('FAIL')
         def onTransition(event):
+            event = machine.TaggedEvent(event)
             self.folder.open(self._temp.name + '/')
             self.folder.setCurrentItem(self.folder.item(0))
             self.handlePreview(self.folder.item(0))
@@ -575,14 +605,10 @@ class Main(widgets.ToolDialog):
         transition.setTargetState(self.state['idle_done'])
         self.state['running'].addTransition(transition)
 
-        transition = utility.NamedTransition('CANCEL')
+        transition = self.taggedTransition('CANCEL')
         transition.setTargetState(self.state['idle_last'])
         self.state['running'].addTransition(transition)
 
-        self.machine = QtStateMachine.QStateMachine(self)
-        self.machine.addState(self.state['idle'])
-        self.machine.addState(self.state['running'])
-        self.machine.setInitialState(self.state['idle'])
         self.machine.start()
 
     def handleOpen(self, checked=False, fileName=None):
@@ -601,7 +627,7 @@ class Main(widgets.ToolDialog):
 
         # self.paramWidget.setParams(self.analysis.params)
         print('SET PARAM FOR MODEL')
-        self.machine.postEvent(utility.NamedEvent('OPEN',file=fileName))
+        self.postAction('OPEN', file=fileName)
 
     def handleSave(self):
         """Called by toolbar action: save"""
@@ -697,17 +723,17 @@ class Main(widgets.ToolDialog):
         def done(result):
             self.temp = self._temp
             self.analysis.results = result
-            self.machine.postEvent(utility.NamedEvent('DONE', True))
+            self.postAction('DONE', True)
 
         def fail(exception):
-            self.machine.postEvent(utility.NamedEvent('FAIL', exception))
+            self.postAction('FAIL', exception)
 
         self.launcher = utility.UProcess(self.workRun)
         self.launcher.done.connect(done)
         self.launcher.fail.connect(fail)
         # self.launcher.setLogger(logging.getLogger())
         self.launcher.start()
-        self.machine.postEvent(utility.NamedEvent('RUN'))
+        self.postAction('RUN')
 
     def workRun(self):
         """Runs on the UProcess, defined here for pickability"""
@@ -726,7 +752,7 @@ class Main(widgets.ToolDialog):
         confirm = self.msgShow(msgBox)
         if confirm == QtWidgets.QMessageBox.Yes:
             self.launcher.quit()
-            self.machine.postEvent(utility.NamedEvent('CANCEL'))
+            self.postAction('CANCEL')
 
     def handlePreview(self, item):
         """Called by file double-click"""
@@ -758,10 +784,5 @@ class Main(widgets.ToolDialog):
             self.fail(exception)
             return
 
-    def onReject(self):
-        """If running, verify cancel"""
-        if self.state['running'] in list(self.machine.configuration()):
-            self.handleStop()
-            return True
-        else:
-            return None
+    def fail(selc, exception):
+        raise exception
