@@ -34,42 +34,6 @@ from . import asap
 from . import params
 
 
-@contextmanager
-def _redirect(stream='stdout', dest=None):
-    """Redirect system stream to file stream"""
-    # High-level redirection
-    original = getattr(sys, stream)
-    original.flush()
-    setattr(sys, stream, dest)
-    # Low-level redirection
-    duplicate = os.dup(original.fileno())
-    os.dup2(dest.fileno(), original.fileno())
-    try:
-        yield dest
-    finally:
-        # Restore stream
-        os.dup2(duplicate, original.fileno())
-        dest.flush()
-        setattr(sys, stream, original)
-
-@contextmanager
-def redirect(stream='stdout', dest=None, mode='w'):
-    """
-    Redirect system stream according to `dest`:
-    - If None: Do nothing
-    - If String: Open file and redirect
-    - Else: Assume IOWrapper, redirect
-    """
-    if dest is None:
-        yield getattr(sys, stream)
-    elif isinstance(dest, str):
-        with open(dest, mode) as file, _redirect(stream, file) as f:
-            yield f
-    else:
-        with _redirect(src, tar) as f:
-            yield f
-
-
 class PartitionAnalysis():
     """
     Container for input/output of ASAP core.
@@ -107,7 +71,6 @@ class PartitionAnalysis():
         """
         groups = self.params.dumps()
         kwargs = {k: v for group in groups.values() for k, v in group.items()}
-        print('!!!', kwargs)
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target

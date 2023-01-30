@@ -90,9 +90,9 @@ void exit_properly(char *ledir)
 	char commande [1024];
 	if (strlen (ledir) >1)
 	{
-	sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
-
-	system(commande);
+	// sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
+	//
+	// system(commande);
 	exit(1);
 	}
 }

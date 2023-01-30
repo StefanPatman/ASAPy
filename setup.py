@@ -152,7 +152,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         'itaxotools-common==0.2.4',
-        'pyqt6',
+        'PySide6',
     ],
 
     # List additional groups of dependencies here (e.g. development

@@ -1,5 +1,3 @@
-from . import main
-
 
 """GUI entry point"""
 
