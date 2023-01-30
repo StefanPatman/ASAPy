@@ -19,9 +19,9 @@
 
 """Param Widgets for PyQt5"""
 
-import PyQt5.QtCore as QtCore
-import PyQt5.QtWidgets as QtWidgets
-import PyQt5.QtGui as QtGui
+from PySide6 import QtCore
+from PySide6 import QtWidgets
+from PySide6 import QtGui
 
 
 class ParamField(QtWidgets.QWidget):
@@ -53,7 +53,8 @@ class ParamList(QtWidgets.QComboBox, ParamField):
     WIDTH = 100
 
     def __init__(self, parent, key, field, validator=None):
-        super().__init__(parent, key, field)
+        super().__init__()
+        # super().__init__(parent, key, field)
 
         for i, l in enumerate(field.data['labels']):
             self.addItem(l, field.data['items'][i])
@@ -99,7 +100,8 @@ class ParamList(QtWidgets.QComboBox, ParamField):
 class ParamBool(QtWidgets.QCheckBox, ParamField):
 
     def __init__(self, parent, key, field, validator=None):
-        super().__init__(parent, key, field)
+        # super().__init__(parent, key, field)
+        super().__init__()
         self.stateChanged.connect(parent.parent.onChange)
 
     def draw(self):
@@ -123,7 +125,8 @@ class ParamEntry(QtWidgets.QLineEdit, ParamField):
     WIDTH = 100
 
     def __init__(self, parent, key, field, validator=None):
-        super().__init__(parent, key, field)
+        # super().__init__(parent, key, field)
+        super().__init__()
         if validator is not None:
             self.setValidator(validator(self))
         self.textChanged.connect(parent.parent.onChange)
@@ -206,7 +209,7 @@ class ParamCategory(QtWidgets.QGroupBox):
 
 class ParamContainer(QtWidgets.QWidget):
     """All Param widgets go here"""
-    paramChanged = QtCore.pyqtSignal(object)
+    paramChanged = QtCore.Signal(object)
     def __init__(self, param=None, doc=True, reset=True):
         super().__init__()
         self.categories = []
@@ -236,8 +239,8 @@ class ParamContainer(QtWidgets.QWidget):
         containerLayout.setContentsMargins(5, 5, 5, 5)
         container.setLayout(containerLayout)
         container.setSizePolicy(
-            QtWidgets.QSizePolicy.Ignored,
-            QtWidgets.QSizePolicy.ExpandFlag | QtWidgets.QSizePolicy.ShrinkFlag)
+            QtWidgets.QSizePolicy.Policy.Ignored,
+            QtWidgets.QSizePolicy.Policy.Expanding)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
@@ -246,7 +249,7 @@ class ParamContainer(QtWidgets.QWidget):
         scroll.setWidget(container)
         scroll.sizeHint = container.sizeHint
         scroll.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+            QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Maximum)
 
         self.scroll = scroll
         self.container = container

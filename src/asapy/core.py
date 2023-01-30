@@ -27,8 +27,9 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime
 
+from itaxotools.common import param
+
 from . import asap
-from . import param
 from . import params
 
 
@@ -88,7 +89,7 @@ class PartitionAnalysis():
         self.results = None
         # self.time_format = '%x - %I:%M%p'
         self.time_format = '%FT%T'
-        self.param = param.ParamList(params.params)
+        self.params = params.params()
 
     def fetch(self, destination):
         """
@@ -103,7 +104,9 @@ class PartitionAnalysis():
         Run the ASAP core with given params,
         save results to a temporary directory.
         """
-        kwargs = self.param.as_dictionary()
+        groups = self.params.dumps()
+        kwargs = {k: v for group in groups.values() for k, v in group.items()}
+        print('!!!', kwargs)
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target

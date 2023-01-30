@@ -19,9 +19,10 @@
 
 """Utility functions for PyQt5"""
 
-import PyQt5.QtCore as QtCore
-import PyQt5.QtWidgets as QtWidgets
-import PyQt5.QtGui as QtGui
+from PySide6 import QtCore
+from PySide6 import QtWidgets
+from PySide6 import QtGui
+from PySide6 import QtStateMachine
 
 import logging
 import sys, os, io
@@ -133,7 +134,7 @@ class PipeIO(io.IOBase):
 
 class TextEditLogger(QtWidgets.QPlainTextEdit):
     """Thread-safe log display in a QPlainTextEdit"""
-    appendRecord = QtCore.pyqtSignal(object)
+    appendRecord = QtCore.Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -173,8 +174,8 @@ class UThread(QtCore.QThread):
     fail(exception):
         Emitted if an exception occured. Passes the exception.
     """
-    done = QtCore.pyqtSignal(object)
-    fail = QtCore.pyqtSignal(object)
+    done = QtCore.Signal(object)
+    fail = QtCore.Signal(object)
 
     def __init__(self, function, *args, **kwargs):
         """
@@ -233,8 +234,8 @@ class UProcess(QtCore.QThread):
     return
 
     """
-    done = QtCore.pyqtSignal(object)
-    fail = QtCore.pyqtSignal(object)
+    done = QtCore.Signal(object)
+    fail = QtCore.Signal(object)
 
     def __getstate__(self):
         """Required for process spawning."""
@@ -394,7 +395,7 @@ class UProcess(QtCore.QThread):
 
 class NamedEvent(QtCore.QEvent):
     """Custom event for use in state machines"""
-    userEvent = QtCore.QEvent.User + 1042
+    userEvent = QtCore.QEvent.Type(QtCore.QEvent.Type.User + 1042)
     def __init__(self, name, *args, **kwargs):
         """Pass name and args"""
         super().__init__(self.userEvent)
@@ -402,7 +403,7 @@ class NamedEvent(QtCore.QEvent):
         self.args = args
         self.kwargs = kwargs
 
-class NamedTransition(QtCore.QAbstractTransition):
+class NamedTransition(QtStateMachine.QAbstractTransition):
     """Custom transition for use in state machines"""
     def __init__(self, name):
         """Only catch events with given name"""

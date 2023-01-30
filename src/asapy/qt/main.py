@@ -21,10 +21,11 @@
 GUI for ASAP ...
 """
 
-import PyQt5.QtCore as QtCore
-import PyQt5.QtWidgets as QtWidgets
-import PyQt5.QtGui as QtGui
-import PyQt5.QtSvg as QtSvg
+from PySide6 import QtCore
+from PySide6 import QtWidgets
+from PySide6 import QtGui
+from PySide6 import QtSvgWidgets
+from PySide6 import QtStateMachine
 
 import os
 import sys
@@ -35,8 +36,9 @@ import shutil
 import pathlib
 import re
 
+from itaxotools.common.param.view import View as ParamView
+
 from .. import core
-from ..param import qt as param_qt
 
 from . import utility
 from . import widgets
@@ -121,7 +123,7 @@ class Main(widgets.ToolDialog):
         self.temp = None
 
         self.setWindowTitle(self.title)
-        self.setWindowIcon(QtGui.QIcon(':/resources/asap-icon-transparent.ico'))
+        self.setWindowIcon(QtGui.QIcon(resources.get('asap-icon-transparent.ico')))
         self.resize(1024,480)
 
         self.machine = None
@@ -250,36 +252,36 @@ class Main(widgets.ToolDialog):
             }
 
         ResultItem.Icons['.tab'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-text.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.txt'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-text.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.csv'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-text.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-text.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.svg'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-graph.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-graph.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.log'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-log.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-log.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.spart'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-spart.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-spart.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.xml'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-spart.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-spart.svg'),
                 colormap=self.colormap_icon))
         ResultItem.Icons['.tree'] = \
-            QtGui.QIcon(widgets.VectorPixmap(':/resources/file-tree.svg',
+            QtGui.QIcon(widgets.VectorPixmap(resources.get('file-tree.svg'),
                 colormap=self.colormap_icon))
 
     def draw(self):
         """Draw all widgets"""
         self.header = widgets.Header()
-        self.header.logoTool = widgets.VectorPixmap(':/resources/logo-asap.svg',
+        self.header.logoTool = widgets.VectorPixmap(resources.get('logo-asap.svg'),
             colormap=self.colormap_icon)
-        self.header.logoProject = QtGui.QPixmap(':/resources/itaxotools-logo-new.png')
+        self.header.logoProject = QtGui.QPixmap(resources.get('itaxotools-logo-new.png'))
         self.header.description = (
             'Primary species delimitation' + '\n'
             'using automatic partitioning'
@@ -292,7 +294,7 @@ class Main(widgets.ToolDialog):
         self.line = widgets.Subheader()
 
         self.line.icon = QtWidgets.QLabel()
-        self.line.icon.setPixmap(widgets.VectorPixmap(':/resources/arrow-right.svg',
+        self.line.icon.setPixmap(widgets.VectorPixmap(resources.get('arrow-right.svg'),
             colormap=self.colormap_icon_light))
         self.line.icon.setStyleSheet('border-style: none;')
 
@@ -319,12 +321,13 @@ class Main(widgets.ToolDialog):
 
         self.pane = {}
 
-        self.paramWidget = param_qt.ParamContainer(self.analysis.param, doc=False)
-        self.paramWidget.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.paramWidget.setContentsMargins(0, 0, 0, 0)
-        self.paramWidget.paramChanged.connect(
-            lambda e: self.machine.postEvent(utility.NamedEvent('UPDATE')))
+        # self.paramWidget = ParamView(self.analysis.params)
+        self.paramWidget = QtWidgets.QFrame()
+        # self.paramWidget.setSizePolicy(
+        #     QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
+        # self.paramWidget.setContentsMargins(0, 0, 0, 0)
+        # self.paramWidget.paramChanged.connect(
+        #     lambda e: self.machine.postEvent(utility.NamedEvent('UPDATE')))
 
         self.pane['param'] = widgets.Panel(self)
         self.pane['param'].title = 'Parameters'
@@ -351,7 +354,7 @@ class Main(widgets.ToolDialog):
             QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
         self.preview.setReadOnly(True)
 
-        self.graphSvg = QtSvg.QSvgWidget()
+        self.graphSvg = QtSvgWidgets.QSvgWidget()
 
         self.graph = QtWidgets.QFrame()
         self.graph.setStyleSheet("""
@@ -408,30 +411,30 @@ class Main(widgets.ToolDialog):
         """Populate dialog actions"""
         self.action = {}
 
-        self.action['open'] = QtWidgets.QAction('&Open', self)
-        self.action['open'].setIcon(widgets.VectorIcon(':/resources/open.svg', self.colormap))
+        self.action['open'] = QtGui.QAction('&Open', self)
+        self.action['open'].setIcon(widgets.VectorIcon(resources.get('open.svg'), self.colormap))
         self.action['open'].setShortcut(QtGui.QKeySequence.Open)
         self.action['open'].setToolTip((
             'Open an aligned fasta file or a distance matrix\n'
             'Accepted formats: phylip, dnadist and MEGA'))
         self.action['open'].triggered.connect(self.handleOpen)
 
-        self.action['save'] = QtWidgets.QAction('&Save', self)
-        self.action['save'].setIcon(widgets.VectorIcon(':/resources/save.svg', self.colormap))
+        self.action['save'] = QtGui.QAction('&Save', self)
+        self.action['save'].setIcon(widgets.VectorIcon(resources.get('save.svg'), self.colormap))
         self.action['save'].setShortcut(QtGui.QKeySequence.Save)
         self.action['save'].setToolTip((
             'Save files with a prefix of your choice\n'
             'Change filter to choose what files are saved'))
         self.action['save'].triggered.connect(self.handleSave)
 
-        self.action['run'] = QtWidgets.QAction('&Run', self)
-        self.action['run'].setIcon(widgets.VectorIcon(':/resources/run.svg', self.colormap))
+        self.action['run'] = QtGui.QAction('&Run', self)
+        self.action['run'].setIcon(widgets.VectorIcon(resources.get('run.svg'), self.colormap))
         self.action['run'].setShortcut('Ctrl+R')
         self.action['run'].setToolTip('Run ASAP analysis')
         self.action['run'].triggered.connect(self.handleRun)
 
-        self.action['stop'] = QtWidgets.QAction('Stop', self)
-        self.action['stop'].setIcon(widgets.VectorIcon(':/resources/stop.svg', self.colormap))
+        self.action['stop'] = QtGui.QAction('Stop', self)
+        self.action['stop'].setIcon(widgets.VectorIcon(resources.get('stop.svg'), self.colormap))
         # self.action['stop'].setShortcut(QtGui.QKeySequence.Cancel)
         self.action['stop'].setToolTip('Cancel analysis')
         self.action['stop'].triggered.connect(self.handleStop)
@@ -442,16 +445,16 @@ class Main(widgets.ToolDialog):
     def cog(self):
         """Define state machine"""
         self.state = {}
-        self.state['idle'] = QtCore.QState()
-        self.state['idle_none'] = QtCore.QState(self.state['idle'])
-        self.state['idle_open'] = QtCore.QState(self.state['idle'])
-        self.state['idle_done'] = QtCore.QState(self.state['idle'])
-        self.state['idle_unchanged'] = QtCore.QState(self.state['idle_done'])
-        self.state['idle_updated'] = QtCore.QState(self.state['idle_done'])
-        self.state['idle_last'] = QtCore.QHistoryState(self.state['idle'])
+        self.state['idle'] = QtStateMachine.QState()
+        self.state['idle_none'] = QtStateMachine.QState(self.state['idle'])
+        self.state['idle_open'] = QtStateMachine.QState(self.state['idle'])
+        self.state['idle_done'] = QtStateMachine.QState(self.state['idle'])
+        self.state['idle_unchanged'] = QtStateMachine.QState(self.state['idle_done'])
+        self.state['idle_updated'] = QtStateMachine.QState(self.state['idle_done'])
+        self.state['idle_last'] = QtStateMachine.QHistoryState(self.state['idle'])
         self.state['idle'].setInitialState(self.state['idle_none'])
         self.state['idle_done'].setInitialState(self.state['idle_unchanged'])
-        self.state['running'] = QtCore.QState()
+        self.state['running'] = QtStateMachine.QState()
 
         state = self.state['idle']
         state.assignProperty(self.action['run'], 'visible', True)
@@ -462,7 +465,7 @@ class Main(widgets.ToolDialog):
         state = self.state['idle_none']
         state.assignProperty(self.action['run'], 'enabled', False)
         state.assignProperty(self.action['save'], 'enabled', False)
-        state.assignProperty(self.paramWidget.container, 'enabled', False)
+        state.assignProperty(self.paramWidget, 'enabled', False)
         state.assignProperty(self.pane['param'], 'enabled', False)
         state.assignProperty(self.pane['list'], 'enabled', False)
         state.assignProperty(self.pane['list'].labelFoot, 'text', 'Nothing to show')
@@ -471,7 +474,7 @@ class Main(widgets.ToolDialog):
         state = self.state['idle_open']
         state.assignProperty(self.action['run'], 'enabled', True)
         state.assignProperty(self.action['save'], 'enabled', False)
-        state.assignProperty(self.paramWidget.container, 'enabled', True)
+        state.assignProperty(self.paramWidget, 'enabled', True)
         state.assignProperty(self.pane['param'], 'enabled', True)
         state.assignProperty(self.pane['list'], 'enabled', False)
         state.assignProperty(self.pane['list'].labelFoot, 'text', 'Nothing to show')
@@ -480,7 +483,7 @@ class Main(widgets.ToolDialog):
         state = self.state['idle_done']
         state.assignProperty(self.action['run'], 'enabled', True)
         state.assignProperty(self.action['save'], 'enabled', True)
-        state.assignProperty(self.paramWidget.container, 'enabled', True)
+        state.assignProperty(self.paramWidget, 'enabled', True)
         state.assignProperty(self.pane['param'], 'enabled', True)
         state.assignProperty(self.pane['list'], 'enabled', True)
         state.assignProperty(self.pane['list'].labelFoot, 'text', 'Double-click for preview')
@@ -494,7 +497,7 @@ class Main(widgets.ToolDialog):
         state.assignProperty(self.action['stop'], 'visible', True)
         state.assignProperty(self.action['open'], 'enabled', False)
         state.assignProperty(self.action['save'], 'enabled', False)
-        state.assignProperty(self.paramWidget.container, 'enabled', False)
+        state.assignProperty(self.paramWidget, 'enabled', False)
         state.assignProperty(self.pane['param'], 'enabled', False)
         state.assignProperty(self.pane['list'], 'enabled', False)
         state.assignProperty(self.pane['preview'], 'enabled', False)
@@ -576,16 +579,16 @@ class Main(widgets.ToolDialog):
         transition.setTargetState(self.state['idle_last'])
         self.state['running'].addTransition(transition)
 
-        self.machine = QtCore.QStateMachine(self)
+        self.machine = QtStateMachine.QStateMachine(self)
         self.machine.addState(self.state['idle'])
         self.machine.addState(self.state['running'])
         self.machine.setInitialState(self.state['idle'])
         self.machine.start()
 
-    def handleOpen(self, e, fileName=None):
+    def handleOpen(self, checked=False, fileName=None):
         """Called by toolbar action: open"""
         if fileName is None:
-            (fileName, _) = QtWidgets.QFileDialog.getOpenFileName(self,
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,
                 self.title + ' - Open File',
                 str(pathlib.Path.cwd()),
                 'All Files (*) ;; Comma Separated Vector files (*.csv)')
@@ -594,9 +597,10 @@ class Main(widgets.ToolDialog):
         self.analysis = core.PartitionAnalysis(fileName)
 
         suffix = QtCore.QFileInfo(fileName).suffix()
-        self.analysis.param.general.mega = (suffix == 'csv')
+        self.analysis.params.general.mega = (suffix == 'csv')
 
-        self.paramWidget.setParams(self.analysis.param)
+        # self.paramWidget.setParams(self.analysis.params)
+        print('SET PARAM FOR MODEL')
         self.machine.postEvent(utility.NamedEvent('OPEN',file=fileName))
 
     def handleSave(self):

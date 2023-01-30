@@ -2,36 +2,10 @@
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages, Extension, Command
-from setuptools.command.build_py import build_py as _build_py
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
 
-class CommandQtAutoCompile(Command):
-    """Custom command for auto-compiling Qt resource files"""
-    description = 'run pyqt5ac on all resource files'
-    user_options = []
-    def initialize_options(self):
-        """virtual overload"""
-        pass
-    def finalize_options(self):
-        """virtual overload"""
-        pass
-    def run(self):
-        """build_qt"""
-        try:
-            import pyqt5ac
-            pyqt5ac.main(ioPaths=[
-                [str(here/'**/qt/*.qrc'), '%%DIRNAME%%/%%FILENAME%%.py'],
-                ])
-        except ModuleNotFoundError as exception:
-            raise ModuleNotFoundError('Missing Qt auto-compiler, please try: pip install pyqt5ac')
-
-class build_py(_build_py):
-    """Overrides setuptools build to autocompile first"""
-    def run(self):
-        self.run_command('build_qt')
-        _build_py.run(self)
 
 asapmodule = Extension('asapy.asap',
         include_dirs = ['src/asap'],
@@ -59,7 +33,7 @@ setup(
     name='asapy',
 
     # Versions should comply with PEP 440
-    version='0.1.1',
+    version='0.1.2',
 
     # This is a one-line description or tagline of what your project does
     description='A Python wrapper for ASAP',  # Optional
@@ -176,8 +150,9 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'pyqt5',
-        ],
+        'itt-common',
+        'pyqt6',
+    ],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -188,9 +163,7 @@ setup(
     #
     # Similar to `install_requires` above, these must be valid existing
     # projects.
-    extras_require={  # Optional
-        'dev': ['pyqt5ac'],
-        },
+    extras_require={}  # Optional
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.
@@ -219,12 +192,6 @@ setup(
             'asapy=asapy.run:main',
             'asapy-qt=asapy.qt.run:main',
         ],
-    },
-
-    # Custom options for setuptools
-    cmdclass = {
-        'build_qt': CommandQtAutoCompile,
-        'build_py': build_py
     },
 
     # List additional URLs that are relevant to your project as a dict.
