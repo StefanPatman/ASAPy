@@ -1,3 +1,8 @@
-PyQt5>=5.15.2
-PyQt5-sip>=12.8.1
-pyqt5ac>=1.2.1
+itaxotools-common==0.2.4
+pip==22.3.1
+PySide6==6.4.2
+PySide6-Addons==6.4.2
+PySide6-Essentials==6.4.2
+setuptools==65.6.3
+shiboken6==6.4.2
+wheel==0.38.4
