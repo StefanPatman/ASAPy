@@ -150,7 +150,7 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'itt-common',
+        'itaxotools-common',
         'pyqt6',
     ],
 
@@ -163,7 +163,7 @@ setup(
     #
     # Similar to `install_requires` above, these must be valid existing
     # projects.
-    extras_require={}  # Optional
+    extras_require={},  # Optional
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.
@@ -190,7 +190,7 @@ setup(
     entry_points={  # Optional
         'console_scripts': [
             'asapy=asapy.run:main',
-            'asapy-qt=asapy.qt.run:main',
+            'asapy-gui=asapy.qt:run',
         ],
     },
 
