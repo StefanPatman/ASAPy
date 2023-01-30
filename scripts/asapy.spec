@@ -3,9 +3,9 @@
 block_cipher = None
 
 # Could also use pyinstaller's Entrypoint()
-a = Analysis(['launcher.py'],
+a = Analysis(['asapy.py'],
              binaries=[],
-             datas=[('src/asapy', 'src/asapy')],
+             datas=[],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx_exclude=[],
           runtime_tmpdir=None,
           console=False,
-          icon='src/asapy/qt/resources/asap-icon.ico' )
+          icon='src/itaxotools/asapy/gui/resources/asap-icon.ico' )

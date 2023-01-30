@@ -6,7 +6,7 @@
 # program specifics
 APP_NAME="ASAPy"
 APP_IDENTIFIER="org.itaxotools.asapy.gui"
-APP_SCRIPT="../launcher.py"
+APP_SCRIPT="../asapy.py"
 APP_ENTITLEMENTS="data/entitlements.plist"
 APP_ICON="data/asapy.icns"
 
