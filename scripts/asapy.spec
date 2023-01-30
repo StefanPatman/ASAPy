@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx_exclude=[],
           runtime_tmpdir=None,
           console=False,
-          icon='src/itaxotools/asapy/gui/resources/asap-icon.ico' )
+          icon='../src/itaxotools/asapy/gui/resources/asap-icon.ico' )

@@ -54,7 +54,7 @@ setup(
     python_requires='>=3.8.6, <4',
     install_requires=[
         'itaxotools-common==0.2.4',
-        'PySide6',
+        'PySide6>=6.1.3',
     ],
     extras_require={
         'dev': [
