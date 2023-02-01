@@ -391,7 +391,7 @@ class Main(common.widgets.ToolDialog):
         self.preview = QtWidgets.QTextEdit()
         self.preview.setFont(
             QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.FixedFont))
-        self.preview.setWordWrapMode(0)
+        self.preview.setWordWrapMode(QtGui.QTextOption.WrapMode(0))
         self.preview.setReadOnly(True)
 
         self.graphSvg = QtSvgWidgets.QSvgWidget()
