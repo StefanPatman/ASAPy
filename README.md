@@ -2,70 +2,38 @@
 
 Assemble species by automatic partitioning.
 
-This is a Python wrapper for ASAP: <https://bioinfo.mnhn.fr/abi/public/asap/>
-
+This is a Python wrapper for [ASAP](https://bioinfo.mnhn.fr/abi/public/asap/).</br>
 Currently using source code from 27 October 2022.
+
+
+### Windows and macOS executables
+Download and run the standalone executables without installing Python.</br>
+[See the latest release here.](https://github.com/iTaxoTools/ASAPy/releases/latest)
+
+
+### Installing from source
+Clone and install the latest version (requires Python 3.8.6 or later):
+```
+git clone https://github.com/iTaxoTools/ASAPy.git
+cd ASAPy
+pip install . -f packages.html
+```
 
 *(you will need a C compiler when building from source)*
 
-## Quick start
 
-Install using pip:
-
+## Usage
+To launch the GUI from an installation, please use:
 ```
-$ pip install .
-```
-
-Run the GUI:
-
-```
-$ asapy-qt
+asapy-gui
 ```
 
-Simple command line tool:
+Click "Open" to select a fasta or MEGA input file. Configure the ASAP parameters on the left sidebar. Then click "Run" and wait. A list of files will be reported at the end of the analysis. Double-click a file to preview it. Click "Save" to store all results to disk with the suffix of your choice.
 
-```
-$ asapy tests/test.fas
-```
 
-## Launch without installing
-
-Before the first time you use the program, you must install any required modules, build the ASAP core and auto-compile the Qt resource files:
-```
-$ pip install -r requirements.txt
-$ python setup.py build_ext --inplace
-$ python setup.py build_qt
-```
-
-You can now launch the GUI:
-```
-$ python launcher.py
-```
-
-## Packaging
-
-You must first compile the ASAP C module, auto-compile Qt resources,
-then use PyInstaller on the launcher **spec** file:
-```
-$ pip install pyinstaller
-$ python setup.py build_ext --inplace
-$ python setup.py build_qt
-$ pyinstaller launcher.spec
-```
-
-## Module
+### Python module
 
 You may import and use the ASAP module in your python scripts.
-
-To launch the GUI:
-```
->>> import asapy.qt
->>> asapy.qt.main.show()
-```
-
-More examples to follow soon.
-
-### Python interactive example
 
 From the root directory, launch the Python interpreter:
 ```
@@ -95,6 +63,16 @@ Save them in a new directory:
 >>> print(a.results)
 >>> a.fetch('./my_results')
 ```
+
+
+### Packaging
+
+It is recommended to use PyInstaller from within a virtual environment:
+```
+pip install ".[dev]" -f packages.html
+pyinstaller scripts/asapy.spec
+```
+
 
 ## Acknowledgements
 
