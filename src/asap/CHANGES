@@ -6,6 +6,10 @@ The following changes were made to the original C code (from 2022-10-27):
 - Workarounds for Unix-only includes and strcasestr()
 - Different names for output files
 
+- Add mafftio.c, import mafftio.h, wrapping standard output
+
+- Nullify asap_common.c/exit_properly effects
+
 - Source diff between original and modified code:
 
 diff -w ASAP/asap.c "src\\asap/asap.c"

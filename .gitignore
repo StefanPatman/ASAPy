@@ -13,8 +13,7 @@ __pycache__/
 .tox
 .cache
 
-# qt auto-compiled resources
-src/*/qt/resources.py
+.DS_Store
 
 # accidental test files
 test.abgd.svg

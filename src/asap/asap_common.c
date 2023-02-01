@@ -65,6 +65,8 @@ for more information, please contact guillaume achaz <guillaume.achaz@mnhn.fr>/<
 #include <float.h>
 #endif
 
+#include "wrapio.h"
+
 unsigned long idum_ran1 = 0;
 char *strcasestr(const char *haystack, const char *needle);
 
@@ -88,9 +90,9 @@ void exit_properly(char *ledir)
 	char commande [1024];
 	if (strlen (ledir) >1)
 	{
-	sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
-
-	system(commande);
+	// sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
+	//
+	// system(commande);
 	exit(1);
 	}
 }

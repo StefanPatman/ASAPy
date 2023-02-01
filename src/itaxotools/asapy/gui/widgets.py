@@ -19,10 +19,10 @@
 
 """Custom widgets for PyQt5"""
 
-import PyQt5.QtCore as QtCore
-import PyQt5.QtWidgets as QtWidgets
-import PyQt5.QtGui as QtGui
-import PyQt5.QtSvg as QtSvg
+from PySide6 import QtCore
+from PySide6 import QtWidgets
+from PySide6 import QtGui
+from PySide6 import QtSvg
 
 import re
 
