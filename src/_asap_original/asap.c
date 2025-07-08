@@ -41,20 +41,20 @@
 #include <float.h>
 #include "asap.h"
 #include "asap_core.h"
+
 #include "oldfns.h"
 //#include "drawMat.h"
 #include "gdtosvg.h"
+#include <unistd.h>
+
+#include <dirent.h>
 #include <errno.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef _WIN32
-#include <unistd.h>
-#include <dirent.h>
-#else
-#define strcasestr strstr
-#endif
+
+
 
 
 #define ASAP_CL
@@ -76,8 +76,6 @@
 #include <float.h>
 #endif
 #define NBCHARMALLOC 256
-
-#include "wrapio.h"
 
 void usage(char *arg)
 {
@@ -398,8 +396,8 @@ free(ligne);
 void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat)
 {
 
-	int a,b,nbc=0,c,n;
-
+	int a,b,c,n;
+	int nbc=0;
 	char *ligne,letter,nombre[16];
 
 //	int nbcol=0;;
@@ -420,15 +418,6 @@ void readMatrixMega(FILE *f_in,struct DistanceMatrix *my_mat)
 	while (1)
 		 {
 			fscanf(f_in,"%[^\n]\n",ligne);
-
-#ifdef _WIN32
-			// Naive solution to replace strcasestr: capitalize everything
-			    char *s = ligne;
-			    while (*s) {
-			      *s = toupper((unsigned char) *s);
-			      s++;
-			    }
-#endif
 
 			if (feof(f_in)) printf("pb reading file...\n"),exit(1);
 
@@ -601,8 +590,6 @@ fclose (f);
 
 
 /*--------------------------------------------------*/
-
-#ifndef ismodule
 int main(int argc, char**argv)
 {
 
@@ -1266,4 +1253,4 @@ if (asap_param.onlyspart==0)
 	return 0;
 }
 
-#endif
+

@@ -50,8 +50,6 @@ for more information, please contact guillaume achaz <guillaume.achaz@mnhn.fr>/<
 #include "asap.h"
 #include "asap_core.h"
 
-#include "wrapio.h"
-
 
 int agglutine(FILE *f, int a, int b, Composante *compo, DistMat mat, long *nbinter, double *Sinter, Tabcompo *strucompo)
 {

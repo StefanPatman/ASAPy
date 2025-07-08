@@ -21,9 +21,9 @@ from multiprocessing import Process
 
 import tempfile
 import shutil
-import pathlib
 from contextlib import contextmanager
 from datetime import datetime
+from pathlib import Path
 
 from itaxotools.common import param
 from itaxotools.common import io
@@ -43,10 +43,10 @@ class PartitionAnalysis():
     def __setstate__(self, state):
         self.__dict__ = state
 
-    def __init__(self, file):
+    def __init__(self, path: Path):
         """
         """
-        self.file = file
+        self.input = path
         self.useLogfile = False
         self.target = None
         self.results = None
@@ -73,10 +73,10 @@ class PartitionAnalysis():
             kwargs['out'] = self.target
         for k, v in kwargs.items():
             print(k, v)
-        with open(pathlib.Path(self.target) / 'asap.log', 'w') as file:
+        with open(Path(self.target) / 'asap.log', 'w') as file:
             with io.redirect(_asap, 'stdout', file):
                 with io.redirect(_asap, 'stderr', file):
-                    _asap.main(self.file, **kwargs)
+                    _asap.main(self.input.as_posix(), **kwargs)
         self.results = self.target
 
     def launch(self):
@@ -88,7 +88,7 @@ class PartitionAnalysis():
         # When the last reference of TemporaryDirectory is gone,
         # the directory is automatically cleaned up, so keep it here.
         self._temp = tempfile.TemporaryDirectory(prefix='asap_')
-        self.target = pathlib.Path(self._temp.name).as_posix()
+        self.target = Path(self._temp.name).as_posix()
         p = Process(target=self.run)
         p.start()
         p.join()

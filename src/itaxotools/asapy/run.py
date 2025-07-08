@@ -11,7 +11,7 @@ from . import core
 def main():
     """Anayze given file"""
     if len(sys.argv) == 2:
-        a = core.PartitionAnalysis(sys.argv[1])
+        a = core.PartitionAnalysis(Path(sys.argv[1]))
         out = Path('out')
         out.mkdir(exist_ok=True)
         a.target = out.as_posix()

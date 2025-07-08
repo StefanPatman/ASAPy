@@ -65,8 +65,6 @@ for more information, please contact guillaume achaz <guillaume.achaz@mnhn.fr>/<
 #include <float.h>
 #endif
 
-#include "wrapio.h"
-
 unsigned long idum_ran1 = 0;
 char *strcasestr(const char *haystack, const char *needle);
 
@@ -90,9 +88,9 @@ void exit_properly(char *ledir)
 	char commande [1024];
 	if (strlen (ledir) >1)
 	{
-	// sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
-	//
-	// system(commande);
+	sprintf (commande, "mv %s%s/results_.html %s%s/results.html", WORKDIR, ledir, WORKDIR, ledir);
+
+	system(commande);
 	exit(1);
 	}
 }
@@ -1041,7 +1039,8 @@ int largeur=360;
 	char  *colors[3]={"#FFFFFF","#ffb83b","#00a5eb"};
 	int nbcomp=((dist_mat.n * (dist_mat.n -1)))/2.0;
 
-	sprintf(filename,"%s%s/histogram.svg",workdir,ledir); // all squares are pointing to a different file
+		sprintf(filename,"%s%s/%s.Histo.svg",workdir,ledir,file_given); // all squares are pointing to a different file
+
 
 	//sprintf(filename,"%s.disthist.svg",file);
 
@@ -1164,7 +1163,7 @@ for (j=0,i = nbresults - 1; i >= 0; i--)
 	fclose(svgout);
 
 	/**********************************AUTRE HISTO*/
-	sprintf(filename,"%s%s/ranks.svg",workdir,ledir); // all squares are pointing to a different file
+	sprintf(filename,"%s%s/%s.HistoCum.svg",workdir,ledir,file_given); // all squares are pointing to a different file
 	svgout=fopen(filename,"w");
 	fprintf(svgout,"<svg xmlns=\"http://www.w3.org/2000/svg\"  ");
 	fprintf(svgout,"width=\"%d\" height=\"%d\" >\n",largeur+sizelegend, hauteur+sizelegend+marge);
@@ -2294,10 +2293,11 @@ void CreateSpartFile(Spart *myspar,char *ledir,int nbstepASAP,char *dataFilename
 		fprintf(f,"Date = %s;\n",ladate);
 		fprintf(f,"N_spartitions = %d : ",nbstepASAP);
 		for (i=0;i<nbstepASAP-1;i++)
-		{
+			{
+//			fprintf(f,"%s_asap_%d / ",dataFilename,i+1);
 				j=order[i][1];
-			    fprintf(f,"%s_asap_%d,%2.1f / ",dataFilename,i+1,scores[j].score);
-		}
+				fprintf(f,"%s_asap_%d,%2.1f / ",dataFilename,i+1,scores[j].score);
+			}
 		j=order[i][1];
 		fprintf(f,"%s_asap_%d,%2.1f;\n",dataFilename,i+1,scores[j].score);
 		fprintf(f,"N_individuals = ");

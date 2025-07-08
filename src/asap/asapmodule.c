@@ -143,7 +143,6 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	Node *zenodes;             /* Nodes of the hierarchical clusterting tree */
 	Parameter asap_param;  		/*stuff for asap*/
 	Spart *myspar;
-
 	int i,
 //		*grp,
 //	    nb_pairs,
@@ -159,51 +158,48 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	FILE *f_in,
 
 	     *fgroups,
-//	 	 *ffgroups,
+	 *file_res_cvs,
 	     *svgout;
 
 	char *fout,
-			 *dirfiles,
+	     *dirfiles,
 	     *dirfiles_default = ".",
-			 *file_data,
-			 *file_log,
+		 *file_data,
+		 *file_log,
 	     *file_res,
 //	      *nametree,
 	     *fname,
 	     *namegroups,
+	     *name_res_cvs,
 	     *simple_name;
 	char *meth[5]={ "K80_Kimura","JC69_Jukes-Cantor","N93_Tamura-Nei" , "Simple_Dist"};
 
-
-//	char nametree[512];
+    char file_dist_name[256];
 
 	time_t t1, t2, t3, t5;
 
 	char c;
 	const char *thedate = NULL;
 	const char *thedate_default = "?";
+	// date calculated via python instead
 
 	int imethode = 1, fmeg = 0, withallfiles = 0;//imethode1 for Jukes
 	int last_node;
-
+	//int fmeg2=0;
 	float maxDist,
 	      min,
 	      ts_tv = 2.0;     /* default value for the trans/transv rates for Kimura 2-p */
 	int nbBestAsap=10;
+
 	double best_score, echx, echy,max_score,min_score;
 
 	int widthKlado;
 	//float seuil_pvalue=0.05;
 
+	// option parsing firectly from python dictionary
+
 	float minAsapDist=0.005,maxAsapDist=0.05;
-
-	// struct stat     statbuf;
-	// struct tm      *tm;
 	struct stat st = {0};
-
-	// stat(argv[0], &statbuf);
-	// tm = localtime(&statbuf.st_mtime);
-	// strftime(thedate,80,"%FT%T", tm); // 11/19/20 - 05:34PM
 
 		/*
 			init
@@ -218,7 +214,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 		//asap_param.ledir="";
 		asap_param.fres=stderr;
 		asap_param.lenSeq=600;
-		asap_param.onlyspart=0;
+		asap_param.onlyspart=1;
 
 	if (!PyArg_ParseTuple(args, "s", &file_data)) return NULL;
 
@@ -313,24 +309,39 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	/*
 
 	*/
-	fout = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 8));
-	if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
+	f_in = fopen(file_data, "r");
+	if (f_in == NULL)fprintf(stderr,"cannot open the file_data, bye\n"), exit(1);
 
-	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + 20)));
-	sprintf(namegroups,"%sgroups.svg",dirfiles);
-	sprintf(fout, "%spartitions.tab", dirfiles);
+	//fout = (char * )malloc( (size_t) sizeof(char) * (strlen(simple_name)+ strlen(dirfiles) + 5));
+	//if (!fout)fprintf(stderr, "main: cannot allocate fout bye\n"), exit(2);
 
+	namegroups=malloc(sizeof(char)*( (strlen (dirfiles) + strlen (simple_name) +20)));
+	sprintf(namegroups,"%s%s.groups.svg",dirfiles, simple_name);//for box graphic
+	//sprintf(fout, "%s%s.all", dirfiles, simple_name);
+	/*if (asap_param.onlyspart==0)
+		{
 	asap_param.f_out = fopen(fout, "w+");
+		if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
+		}*/
 	asap_param.fres=stdout;
 	asap_param.web=0;
-	if (asap_param.f_out == NULL)fprintf(stderr,"cannot open the output file %s, bye\n", fout), exit(1);
+	//
+	name_res_cvs=(char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
+	sprintf(name_res_cvs, "%s.res.cvs", simple_name);
+	if (asap_param.onlyspart==0)
+		{
+	file_res_cvs=fopen(name_res_cvs,"w");
+	if (file_res_cvs==NULL)fprintf(stderr, "cannot open the result  output file %s, bye\n", name_res_cvs), exit(1);
+	// changed
+		}
 
-	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +11) );
-	sprintf(fname, "%sspecies.svg", dirfiles);
-
+	fname = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +5) );
+	sprintf(fname, "%s%s.svg", dirfiles, simple_name);// for main graphic results
+	if (asap_param.onlyspart==0)
+		{
 	svgout = fopen(fname, "w");
 	if (svgout == NULL)fprintf(stderr, "cannot open the graphic output file %s, bye\n", fname), exit(1);
-
+		}
 
 	/*
 		Read or build the distance matrix
@@ -339,8 +350,29 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	rewind(f_in);
 	if ( c == '>'){
 		fprintf(stderr, "> asap is reading the fasta file and computing the distance matrix\n");
-		// mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
+
+
+	//mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),"",stdout);
 		mat = compute_dis(f_in, imethode, ts_tv, &(asap_param.lenSeq),asap_param);
+
+	if (asap_param.onlyspart ==0)
+	{
+	FILE *ftemp;
+
+	sprintf(file_dist_name,"%s_distmat.txt",simple_name);
+
+	ftemp=fopen(file_dist_name,"w");
+	if (ftemp != NULL)
+		{
+		fprint_distmat(mat ,ftemp );
+		fclose (ftemp);
+
+
+		}
+
+	}
+
+
 	}
 	else
 	{
@@ -362,9 +394,16 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 			}
 		//else
 			//readMatrixMega(f_in,&mat);
+
+
 	}
 	fclose(	f_in);
 	fprintf(stderr,"End of matrix distance\n");
+	if (mat.n==0 || mat.n==1)
+	{
+		fprintf(stderr,"End of matrix distance an error was found\n Check your format\nExiting");exit(1);
+
+	}
 	myspar=malloc(sizeof(Spart)*mat.n);
 
 		/*for (i=0;i<mat.n;i++)
@@ -399,6 +438,7 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	zenodes = (Node *) malloc( (size_t) sizeof(Node) * ((mat.n*2)-1));
 	if (!zenodes)fprintf(stderr, "main: MEMORY ERROR error can allocate  zenodes bye\n"), exit(2);
 
+
 	strucompo = (Tabcompo *) malloc( (size_t) sizeof(Tabcompo) * mat.n);
 	if (!strucompo)fprintf(stderr, "main: cannot allocate  strucompo bye\n"), exit(2);
 
@@ -409,25 +449,27 @@ asap_main(PyObject *self, PyObject *args, PyObject *kwargs) {
 	for (i=0;i<mat.n;i++)
 				scores[i].listNodes=malloc(sizeof(int)*mat.n);
 
+
 	initcomp(&comp, mat.n, stderr, "");
 	inittabcompo(strucompo, mat.n, stderr, "");       /* the structures are oversized currently */
 	initNodes(stderr, zenodes, mat, "");
-
+//FILE *fdeb;
+//	fdeb=fopen("/Applications/MAMP/htdocs/temp/debug.txt","w");
 	/*
 		Set the first n nodes to their id --the leaves--
 	*/
 	for (i = 0; i < mat.n; i++)
 		no_node[i] = i;
 
-
+//int nb_pairs=(mat.n*(mat.n-1))/2;
 	/*
 		from the distance matrix, build a sorted list of pairwise_distance, min and max
 	*/
 	mattolist(ListDistance , &mat , &maxDist, &min);
 
 
-	//	for (i=0;i<nb_pairs;i++)
-	//		fprintf(stderr,"%d %f %d %d\n",i,ListDistance[i].d,ListDistance[i].a,ListDistance[i].b);
+		//for (i=0;i<nb_pairs;i++)
+		//	fprintf(fdeb,"%d %f %d %d\n",i,ListDistance[i].d,ListDistance[i].a,ListDistance[i].b);
 
 
 	nbresults = 0;
@@ -480,23 +522,19 @@ fprintf(stderr,"> asap has finished building and testing all partitions\n  ");
 		scores[i].rank_general=i+1;
 
 
-
-	file_res = (char * )malloc( (size_t) sizeof(char) * (strlen(dirfiles) + 10));
-	sprintf(file_res,"%sscores.tab",dirfiles);
-	fres = fopen(file_res,"w");
-
-	fprintf(stderr, "> writing scores file\n",asap_param.lenSeq);
-	fprintf(fres, "\n> %d Best asap scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
-	fprintf(fres, "  distance  #species   #spec w/rec  p-value pente asap-score\n");
+	fprintf(stderr, "\n> %d Best asap scores (probabilities evaluated with seq length:%d)\n",nbBestAsap,asap_param.lenSeq);
+	fprintf(stderr, "  distance  #species   #spec w/rec  p-value pente asap-score\n");
+	if (asap_param.onlyspart==0)
+		fprintf(file_res_cvs,"Partition rank\tNbSubset\tAsap score\tp-val\tpval-rank\tW\tW rank\tTreshold distance\n");
 	int nb_B=(nbresults<nbBestAsap)?nbresults:nbBestAsap;
-	for (i = 0; i < nb_B; i++)
+	for (i = 0; i < nbresults; i++)
 
 			{
 						char toStar=' ';
 					if (scores[i].d_jump>=minAsapDist && scores[i].d_jump<=maxAsapDist)
 						toStar='*';
-
-			 fprintf(fres, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
+			if ( i < nb_B)
+			 	fprintf(stderr, "%c%8.4f %8d  %12d  %.3e %e \t%f \n",
 			    	toStar,
 			 		scores[i].d_jump,
 			 		scores[i].nbspec,
@@ -505,8 +543,23 @@ fprintf(stderr,"> asap has finished building and testing all partitions\n  ");
 
 			       	 scores[i].other_parameter *100,
 			       	 scores[i].score);
+			 if (asap_param.onlyspart==0)
+				fprintf(file_res_cvs, "%d\t%d\t%2.2f\t%e\t%d\t%f\t%d\t%f\n",
+
+				i+1, //
+			      	scores[i].nbspecRec,
+				scores[i].score,
+			       	scores[i].proba,
+			       	scores[i].rank_proba,
+
+			        scores[i].other_parameter,
+			        scores[i].rank_pente,
+			       	scores[i].d_jump);
+
+
+
+
 			}
-	fclose(fres);
 
 	/*if (withallfiles)
 		//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
@@ -527,11 +580,30 @@ fprintf(stderr,"> asap has finished building and testing all partitions\n  ");
 
 if (asap_param.onlyspart==0)
 	{
-	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
+	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" ");
+	//	fprintf(svgout, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\"");
 	fprintf(svgout, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
 
 
 	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
+
+
+
+	char *fname2;
+	FILE *svgout2;
+	fname2 = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +10) );
+	sprintf(fname2, "%s%s.curve.svg", dirfiles, simple_name);// for main graphic results
+	svgout2 = fopen(fname2, "w");
+
+	fprintf(svgout2, "<svg xmlns=\"http://www.w3.org/2000/svg\"  ");
+	fprintf(svgout2, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
+
+
+	CreateCurve2(scores, nbresults, dirfiles, simple_name, NULL, maxDist,  svgout2,mat.n,max_score,min_score,widthKlado,minAsapDist,maxAsapDist);
+	fprintf(svgout2, "</svg>\n");
+	fclose (svgout2);
+	free(fname2);
+
 	}
 	clearalltab(strucompo, &comp, mat.n);
 
@@ -540,23 +612,46 @@ if (asap_param.onlyspart==0)
 	echy = mat.n * SIZEOFTEXT;
 	echx = widthKlado / (float)maxDist;
 
+
 	print_clado(zenodes, last_node, NULL, echx, echy, (widthKlado - 100) / zenodes[last_node].round, 0,0);
+
+if (asap_param.onlyspart==0)
+{
+
 
 	draw_clado(zenodes, svgout, last_node, mat.n,widthKlado);
 
+	char *fname2;
+	FILE *svgout2;
+	fname2 = (char *) malloc( (size_t) sizeof(char) * (strlen (dirfiles) + strlen (simple_name) +10) );
+	sprintf(fname, "%s%s.clado.svg", dirfiles, simple_name);// for main graphic results
+	svgout2 = fopen(fname, "w");
+
+	fprintf(svgout2, "<svg xmlns=\"http://www.w3.org/2000/svg\" onload=\"init(evt)\" ");
+	fprintf(svgout2, "width=\"%d\" height=\"%ld\" >\n", widthKlado + MARGECLADO + 20, HAUTEURCOURBE + MARGECLADO + ( mat.n * SIZEOFTEXT));
+	draw_clado(zenodes, svgout2, last_node, mat.n,widthKlado);
+	fprintf(svgout2, "</svg>\n");
+	fclose (svgout2);
+	free(fname2);
+
+}
 	color_clado(zenodes, last_node,&color_ori);
 
-
-//	draw_bestlines(zenodes, last_node,svgout, scores, echx, MARGECLADO + ( mat.n * SIZEOFTEXT) + HAUTEURCOURBE, nbresults,min_pvalue);
-
+if (asap_param.onlyspart==0)
+	{
 	fprintf(svgout, "</svg>\n");
 	fclose(svgout);
+	}
+
+	if (asap_param.onlyspart==0)
+	{
 	fgroups=fopen(namegroups,"w");
 	if (fgroups==NULL)
 	printf("Cant write %s\n",namegroups);
 	else
 	draw_nico(zenodes, fgroups, mat.n,scores,nbresults,asap_param.seuil_pvalue,10,last_node,widthKlado);
 	//printf("write \n");
+	}
 		for (i=0;i<mat.n;i++)
 			{
 				int n=zenodes[i].first_to_draw; //assign ed in print_clado
@@ -571,8 +666,6 @@ if (asap_param.onlyspart==0)
 			/*for (i=0;i<mat.n;i++)
 			printf("i:%d %s\n",i,myspar[i].name);*/
 		//qsort(scores,nbresults,sizeof (Results ),compareRang);
-	if (withallfiles)
-	{
 		int **o_sp;
 			//ecrit_fichier_texte( dirfiles,nb_B, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue);
 		qsort(scores,nbresults,sizeof (Results ),compareRang);
@@ -581,36 +674,61 @@ if (asap_param.onlyspart==0)
 		o_sp=malloc(sizeof(int*)*nb_B);
 		for (i=0;i<nb_B;i++)
 			o_sp[i]=malloc(sizeof(int)*2);
-		//fprintf(stderr,"go ecrit\n");
+	//fprintf(stderr,"go ecrit %d %d\n",nb_B,nbresults);
+
 		ecrit_fichier_texte( dirfiles,nb_B-1,nbresults, zenodes,scores,asap_param.fres,asap_param.seuil_pvalue,myspar,mat.n,last_node,simple_name,asap_param.onlyspart);
+
 		//fprintf(stderr,"go order\n");
 		order_spart(o_sp,nb_B,myspar,mat.n);
 		//fprintf(stderr,"go create\n");
+	/*for (i=0;i<10;i++)
+	{
+	printf("%d (%d)---> ",scores[i].nbspecRec,scores[i].rank_general);
+	int k;
+	for (k=0;k<scores[i].nbspecRec;k++)
+	printf("%2d ", scores[i].eff_groups[k]);
+	printf("\n");
+	}*/
 		CreateSpartFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
 		//fprintf(stderr,"go print_Spart\n");
 		//print_spart(myspar,nb_B,mat.n);
 		CreateXMLFile(myspar,dirfiles,nb_B,simple_name,stdout,scores,mat.n,thedate,"",meth[imethode],o_sp);
-		for (i=0;i<nb_B;i++)
+	/*char ftree[1024];
+	sprintf(ftree, "%s%s.tree", dirfiles, simple_name);// for main graphic results
+	FILE *ff=fopen(ftree,"w");
+		multitreeoutNck(zenodes,ff,last_node );
+	fprintf(ff,";\n");
+	fclose (ff);*/
+	for (i=0;i<nb_B;i++)
 			free(o_sp[i]);
 		free(o_sp);
-	}
 
-	fclose(asap_param.f_out);
-	fclose(fgroups);
-
-	fprintf(stderr, "> results were write\n");
+	fprintf(stderr, "> results were write \n");
 
 	t5 = time(NULL);
 
 	resetcomp(&comp, mat.n);
-	// fprintf(stderr, "  partition results are logged in: \n");
-	// fprintf(stderr, "\tFull results: %s\n",fout);
-	// fprintf(stderr, "\tThe csv file of rank x: %sgroupe_x\n",dirfiles);
-	// fprintf(stderr, "\tThe result file of rank x: %sgroup_x\n",dirfiles);
-	// fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
-	// fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
 
-	free (fout);
+	fprintf(stderr, "  partition results are logged in: \n");
+
+
+	if (asap_param.onlyspart==0)
+	{
+	fprintf(stderr,	"\tMatrix dist is written as %s\n",file_dist_name);
+	fprintf(stderr, "\tThe rank below is given by asap_score\n");
+	fprintf(stderr, "\tThe csv file of rank x: %sPartition_x\n",dirfiles);
+	fprintf(stderr, "\tThe result file of rank x: %sPartition_x\n",dirfiles);
+	fprintf(stderr, "\tThe graphic outputs are: %s*.svg\n",dirfiles);
+	fprintf(stderr, "\tXML spart file is: %s%s.spart.xml\n", dirfiles,simple_name);
+
+	fprintf(stderr, "\tResults text file is: %s%s\n",dirfiles,name_res_cvs);
+
+		free(name_res_cvs);
+
+	}
+	fprintf(stderr, "\tSpart file is: %s%s.spart\n", dirfiles,simple_name);
+
+	//free (fout);
 //	free(fileNex);
 //	free(newickStringOriginal);
 //	free(newickString);

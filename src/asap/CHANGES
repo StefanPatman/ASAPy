@@ -1,16 +1,17 @@
-The following changes were made to the original C code (from 2022-10-27):
+The following changes were made to the original C code:
 
-- Added Python module as `asapmodule.c`: adds a modified version of asap.c/main()
-- The option for only outputting spart files was ignored
+- Added Python module as `asapmodule.c`: Has a modified version of asap.c/main() !!!
+- The option for only outputting spart files is _enforced_
 
 - Workarounds for Unix-only includes and strcasestr()
 - Different names for output files
 
-- Add mafftio.c, import mafftio.h, wrapping standard output
+- Add wrapio.c & import wrapio.h, which redirects standard output
 
 - Nullify asap_common.c/exit_properly effects
 
-- Source diff between original and modified code:
+
+Source diff between original and modified code:
 
 diff -w ASAP/asap.c "src\\asap/asap.c"
 47,49d46
