@@ -1265,7 +1265,8 @@ void CreateCurve2(Results *scores,  int nbresults, char *dirfiles, char *dataFil
 	echelleY1 = (double)hauteur / (double) (max_score);
 //	echelleY2= (double)hauteur / (double) best_res[0][6];
 	echellex= (double)largeur/(double) (scores[nbresults-2].d );
-
+	if (nb_seq<40)
+		echellex= (double)largeur/(double) (maxDi);
 
 
 	svgFilledRectangleNoBorder(svgout, MARGECLADO+ (minDi*echellex), bord, ((maxDi-minDi)*echellex), hauteur,"lightblue");

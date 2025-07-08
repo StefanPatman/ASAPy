@@ -1,4 +1,65 @@
 [build-system]
-# Require pyqt5ac for auto-compiling qt resource files
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "itaxotools-asapy"
+dynamic = ["version"]
+description = "Python wrapper for ASAP"
+readme = "README.md"
+requires-python = ">=3.10.2, <4"
+keywords = []
+authors = [
+    { name = "StefanPatman", email = "stefanpatman91@gmail.com" },
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "itaxotools-common",
+]
+
+[project.optional-dependencies]
+dev = [
+    "setuptools-scm",
+    "pre-commit",
+    "ruff",
+    "pytest",
+]
+
+[project.urls]
+Homepage = "https://itaxotools.org/"
+Source = "https://github.com/iTaxoTools/ASAPy"
+
+[project.scripts]
+asapy = "itaxotools.asapy.run:main"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.setuptools_scm]
+
+[tool.ruff]
+ignore-init-module-imports = true
+extend-select = ["I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["itaxotools"]
+section-order = [
+    "future",
+    "pyqt",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+pyqt = ["PySide6"]

@@ -22,15 +22,13 @@ from multiprocessing import Process
 import tempfile
 import shutil
 import pathlib
-import os
-import sys
 from contextlib import contextmanager
 from datetime import datetime
 
 from itaxotools.common import param
 from itaxotools.common import io
 
-from . import asap
+from . import _asap
 from . import params
 
 
@@ -52,7 +50,6 @@ class PartitionAnalysis():
         self.useLogfile = False
         self.target = None
         self.results = None
-        # self.time_format = '%x - %I:%M%p'
         self.time_format = '%FT%T'
         self.params = params.params()
 
@@ -74,12 +71,12 @@ class PartitionAnalysis():
         kwargs['time'] = datetime.now().strftime(self.time_format)
         if self.target is not None:
             kwargs['out'] = self.target
+        for k, v in kwargs.items():
+            print(k, v)
         with open(pathlib.Path(self.target) / 'asap.log', 'w') as file:
-            with (
-                io.redirect(asap, 'stdout', file),
-                io.redirect(asap, 'stderr', file),
-            ):
-                asap.main(self.file, **kwargs)
+            with io.redirect(_asap, 'stdout', file):
+                with io.redirect(_asap, 'stderr', file):
+                    _asap.main(self.file, **kwargs)
         self.results = self.target
 
     def launch(self):

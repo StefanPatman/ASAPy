@@ -1,5 +1,7 @@
 # ASAPy
 
+**WIP: being prepared for launching on PyPI**
+
 Assemble species by automatic partitioning.
 
 This is a Python wrapper for [ASAP](https://bioinfo.mnhn.fr/abi/public/asap/).</br>

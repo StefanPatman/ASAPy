@@ -648,15 +648,15 @@ PyDoc_STRVAR(asap_doc,
 
 static struct PyModuleDef asapmodule = {
   PyModuleDef_HEAD_INIT,
-  "asap",   /* name of module */
-  asap_doc, /* module documentation, may be NULL */
-  -1,       /* size of per-interpreter state of the module,
-               or -1 if the module keeps state in global variables. */
+  "_asap",   /* name of module */
+  asap_doc,  /* module documentation, may be NULL */
+  -1,        /* size of per-interpreter state of the module,
+                or -1 if the module keeps state in global variables. */
   AsapMethods
 };
 
 PyMODINIT_FUNC
-PyInit_asap(void)
+PyInit__asap(void)
 {
 	PyObject *m = NULL;
 
